@@ -14,3 +14,9 @@ how to install
 5 Pls create New Branches for code myself
 
 6 that cool ,have fun 
+
+Presentation Layer: Frontend (Next.js + Tailwind CSS)
+
+Application Layer: API Layer (Next.js API routes with Prisma ORM)
+  
+Data Layer: PostgreSQL database  
