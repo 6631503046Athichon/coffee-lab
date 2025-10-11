@@ -9,6 +9,8 @@ how to install
 
 3 Pls Read README Before starting work
 
-4 Pls create New Branches for code myself
+4 npm run dev for run web localhost
 
-5 that cool ,have fun 
+5 Pls create New Branches for code myself
+
+6 that cool ,have fun 
