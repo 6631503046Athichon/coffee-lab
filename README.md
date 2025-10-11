@@ -5,7 +5,7 @@ how to install
 
 1 npm install for pack_Node
 
-2 if you can't run try chaeck node in you computer
+2 if you can't run try chaeck you have node.js on in you computer
 
 3 Pls Read README Before starting work
 
