@@ -1,47 +1,211 @@
-
 import React from 'react';
 import { useDataContext } from '../hooks/useDataContext';
-import { Coffee, Droplets, FlaskConical } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { UserRole } from '../types';
+import { Coffee, Droplets, FlaskConical, TrendingUp, Users, Award, PackageCheck } from 'lucide-react';
 
-const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string | number; color: string }> = ({ icon, title, value, color }) => (
-  <div className="bg-white p-6 rounded-lg shadow flex items-start">
-    <div className={`p-3 rounded-full ${color}`}>
-      {icon}
+const StatCard: React.FC<{
+  icon: React.ReactNode;
+  title: string;
+  value: string | number;
+  bgColor: string;
+  iconColor: string;
+  subtitle?: string;
+}> = ({ icon, title, value, bgColor, iconColor, subtitle }) => (
+  <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100">
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className={`p-4 rounded-xl ${bgColor} shadow-md`}>
+          <div className={iconColor}>
+            {icon}
+          </div>
+        </div>
+        <TrendingUp className="h-5 w-5 text-green-500" />
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">{title}</p>
+        <p className="text-4xl font-bold text-gray-800 mb-1">{value}</p>
+        {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+      </div>
     </div>
-    <div className="ml-4">
-      <p className="text-sm font-medium text-gray-500">{title}</p>
-      <p className="text-2xl font-bold text-gray-800">{value}</p>
-    </div>
+    <div className={`h-2 ${bgColor}`}></div>
   </div>
 );
 
 const Dashboard: React.FC = () => {
   const { data } = useDataContext();
+  const { currentUser } = useAuth();
+
+  // Filter data based on user role
+  const isAdmin = currentUser?.role === UserRole.Admin;
+  const isFarmer = currentUser?.role === UserRole.Farmer;
+  const isProcessor = currentUser?.role === UserRole.Processor;
+  const isCupper = currentUser?.role === UserRole.Cupper || currentUser?.role === UserRole.HeadJudge;
+  const isRoaster = currentUser?.role === UserRole.Roaster;
+
+  // Calculate stats based on role
+  let activeLots = 0;
+  let processingBatches = 0;
+  let completedBatches = 0;
+  let cuppingSessions = 0;
+  let totalUsers = 0;
+  let greenBeanLots = 0;
+
+  if (isAdmin) {
+    // Admin sees all data
+    activeLots = data.harvestLots.length;
+    processingBatches = data.processingBatches.filter(b => b.status !== 'Completed').length;
+    completedBatches = data.processingBatches.filter(b => b.status === 'Completed').length;
+    cuppingSessions = data.cuppingSessions.length;
+    totalUsers = data.users.length;
+    greenBeanLots = data.greenBeanLots.length;
+  } else if (isFarmer) {
+    // Farmer sees only their data
+    const farmerLots = data.harvestLots.filter(lot => lot.farmerName === currentUser?.name);
+    activeLots = farmerLots.length;
+
+    // Processing batches related to farmer's lots
+    const farmerLotIds = farmerLots.map(lot => lot.id);
+    processingBatches = data.processingBatches.filter(b =>
+      farmerLotIds.includes(b.harvestLotId) && b.status !== 'Completed'
+    ).length;
+    completedBatches = data.processingBatches.filter(b =>
+      farmerLotIds.includes(b.harvestLotId) && b.status === 'Completed'
+    ).length;
+  } else if (isProcessor) {
+    // Processor sees processing-related data
+    processingBatches = data.processingBatches.filter(b => b.status !== 'Completed').length;
+    completedBatches = data.processingBatches.filter(b => b.status === 'Completed').length;
+    greenBeanLots = data.greenBeanLots.length;
+  } else if (isCupper) {
+    // Cupper sees cupping-related data
+    cuppingSessions = data.cuppingSessions.length;
+    greenBeanLots = data.greenBeanLots.length;
+  } else if (isRoaster) {
+    // Roaster sees roasting-related data
+    greenBeanLots = data.greenBeanLots.filter(lot => lot.availabilityStatus === 'Available').length;
+    const roasterInventory = data.roasterInventory.filter(item => item.roasterId === currentUser?.id);
+    totalUsers = roasterInventory.length; // Using this as roaster inventory count
+  }
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Coffee Lab</h1>
-      <p className="text-gray-600 mb-8">Your central hub for coffee quality and traceability.</p>
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl shadow-md p-8 border border-amber-100">
+        <div className="flex items-center gap-4 mb-3">
+          <div className="p-3 bg-amber-600 rounded-xl shadow-lg">
+            <Coffee className="h-10 w-10 text-white" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold text-gray-800">Welcome to Coffee Lab</h1>
+            <p className="text-gray-600 text-lg mt-1">Your central hub for coffee quality and traceability.</p>
+          </div>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <StatCard 
-          icon={<Coffee className="h-6 w-6 text-green-800" />}
-          title="Active Harvest Lots"
-          value={data.harvestLots.length}
-          color="bg-green-100"
-        />
-        <StatCard 
-          icon={<Droplets className="h-6 w-6 text-blue-800" />}
-          title="Batches in Processing"
-          value={data.processingBatches.filter(b => b.status !== 'Completed').length}
-          color="bg-blue-100"
-        />
-        <StatCard 
-          icon={<FlaskConical className="h-6 w-6 text-purple-800" />}
-          title="Cupping Sessions"
-          value={data.cuppingSessions.length}
-          color="bg-purple-100"
-        />
+      {/* Stats Grid */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+          <Award className="h-7 w-7 text-amber-600" />
+          Overview Statistics
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {(isAdmin || isFarmer) && (
+            <StatCard
+              icon={<Coffee className="h-7 w-7" />}
+              title="Active Harvest Lots"
+              value={activeLots}
+              bgColor="bg-green-100"
+              iconColor="text-green-700"
+              subtitle="Currently tracked"
+            />
+          )}
+          {(isAdmin || isFarmer || isProcessor) && (
+            <StatCard
+              icon={<Droplets className="h-7 w-7" />}
+              title="Batches in Processing"
+              value={processingBatches}
+              bgColor="bg-blue-100"
+              iconColor="text-blue-700"
+              subtitle="Active batches"
+            />
+          )}
+          {(isAdmin || isCupper) && (
+            <StatCard
+              icon={<FlaskConical className="h-7 w-7" />}
+              title="Cupping Sessions"
+              value={cuppingSessions}
+              bgColor="bg-purple-100"
+              iconColor="text-purple-700"
+              subtitle="Total sessions"
+            />
+          )}
+          {(isAdmin || isFarmer || isProcessor) && (
+            <StatCard
+              icon={<PackageCheck className="h-7 w-7" />}
+              title="Completed Batches"
+              value={completedBatches}
+              bgColor="bg-amber-100"
+              iconColor="text-amber-700"
+              subtitle="Ready for next stage"
+            />
+          )}
+          {(isAdmin || isProcessor || isCupper || isRoaster) && (
+            <StatCard
+              icon={<Coffee className="h-7 w-7" />}
+              title={isRoaster ? "Available Green Beans" : "Green Bean Lots"}
+              value={greenBeanLots}
+              bgColor="bg-emerald-100"
+              iconColor="text-emerald-700"
+              subtitle={isRoaster ? "Ready to claim" : "Available inventory"}
+            />
+          )}
+          {isAdmin && (
+            <StatCard
+              icon={<Users className="h-7 w-7" />}
+              title="Total Users"
+              value={totalUsers}
+              bgColor="bg-indigo-100"
+              iconColor="text-indigo-700"
+              subtitle="Active members"
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {(isAdmin || isFarmer) && (
+            <button className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-amber-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg">
+              <Coffee className="h-8 w-8 text-amber-600 mb-3" />
+              <h3 className="font-bold text-gray-800 mb-1">New Harvest</h3>
+              <p className="text-sm text-gray-600">Record a new harvest lot</p>
+            </button>
+          )}
+          {(isAdmin || isProcessor) && (
+            <button className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-blue-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg">
+              <Droplets className="h-8 w-8 text-blue-600 mb-3" />
+              <h3 className="font-bold text-gray-800 mb-1">Start Processing</h3>
+              <p className="text-sm text-gray-600">Begin new processing batch</p>
+            </button>
+          )}
+          {(isAdmin || isCupper) && (
+            <button className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-purple-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg">
+              <FlaskConical className="h-8 w-8 text-purple-600 mb-3" />
+              <h3 className="font-bold text-gray-800 mb-1">New Session</h3>
+              <p className="text-sm text-gray-600">Create cupping session</p>
+            </button>
+          )}
+          {isAdmin && (
+            <button className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-green-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg">
+              <Award className="h-8 w-8 text-green-600 mb-3" />
+              <h3 className="font-bold text-gray-800 mb-1">View Reports</h3>
+              <p className="text-sm text-gray-600">Quality insights & analytics</p>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

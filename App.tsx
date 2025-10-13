@@ -1,7 +1,5 @@
 
 
-
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Coffee, Droplets, FlaskConical, Trophy, Users, Search, BarChart, Lightbulb, Database, ClipboardCheck, Edit, Flame } from 'lucide-react';
@@ -9,7 +7,9 @@ import { Coffee, Droplets, FlaskConical, Trophy, Users, Search, BarChart, Lightb
 import { UserRole, User, CuppingSessionType } from './types';
 import { MOCK_DATA } from './constants';
 import { DataContext } from './hooks/useDataContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Sidebar, Header } from './components/layout';
+import Login from './components/auth/Login';
 import Dashboard from './components/Dashboard';
 import ProcessorWorkbench from './components/processor/ProcessorWorkbench';
 import CuppingHub from './components/cupper/CuppingHub';
@@ -26,22 +26,12 @@ import TraceabilityHub from './components/TraceabilityHub';
 import UserManagement from './components/UserManagement';
 import RoasterWorkbench from './components/roaster/RoasterWorkbench';
 
-const App: React.FC = () => {
+// Protected routes component
+const ProtectedRoutes: React.FC = () => {
+  const { isAuthenticated, currentUser } = useAuth();
   const [data, setData] = useState(MOCK_DATA);
-  const [currentUserRole, setCurrentUserRole] = useState<UserRole>(UserRole.Processor);
-  const [currentUser, setCurrentUser] = useState<User | undefined>(data.users.find(u => u.role === UserRole.Processor));
 
   const contextValue = useMemo(() => ({ data, setData }), [data, setData]);
-
-  useEffect(() => {
-    const newCurrentUser = data.users.find(u => u.role === currentUserRole);
-    // A special case for Cupper role to select a specific user for scoring
-    if (currentUserRole === UserRole.Cupper) {
-        setCurrentUser(data.users.find(u => u.id === 'user-cupper1'));
-    } else {
-        setCurrentUser(newCurrentUser);
-    }
-  }, [currentUserRole, data.users]);
 
   const navItems = useMemo(() => {
     let competitionAdminHref = '/cupping'; // Default to hub
@@ -54,7 +44,7 @@ const App: React.FC = () => {
 
         // Prioritize active sessions for the current user
         const activeSession = judgeSessions.find(s => s.status === 'Adjudication' || s.status === 'Scoring');
-        
+
         if (activeSession) {
             competitionAdminHref = `/competition/${activeSession.id}`;
         } else if (judgeSessions.length > 0) {
@@ -86,17 +76,17 @@ const App: React.FC = () => {
     ];
   }, [currentUser, data.cuppingSessions]);
 
-  const handleRoleChange = (role: UserRole) => {
-    setCurrentUserRole(role);
-  };
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <DataContext.Provider value={contextValue}>
       <div className="flex h-screen bg-gray-50 text-gray-800">
-        <Sidebar navItems={navItems} currentUserRole={currentUserRole} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header currentUserRole={currentUserRole} onRoleChange={handleRoleChange} />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 sm:p-6 lg:p-8">
+        <Sidebar navItems={navItems} currentUserRole={currentUser?.role || UserRole.Farmer} />
+        <div className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
+          <Header currentUserRole={currentUser?.role || UserRole.Farmer} onRoleChange={() => {}} />
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-3 sm:p-4 md:p-6 lg:p-8 pt-16 lg:pt-4">
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" />} />
               <Route path="/dashboard" element={<Dashboard />} />
@@ -106,7 +96,7 @@ const App: React.FC = () => {
               <Route path="/cupping/:id" element={<CuppingSessionDetail currentUser={currentUser!} />} />
               <Route path="/scoring" element={<CupperScoringSheet currentUser={currentUser!} />} />
               <Route path="/insights" element={<QualityInsights />} />
-              <Route path="/competition/:id" element={<CompetitionDashboard currentUserRole={currentUserRole} />} />
+              <Route path="/competition/:id" element={<CompetitionDashboard currentUserRole={currentUser?.role || UserRole.Farmer} />} />
               <Route path="/traceability/:lotId" element={<TraceabilityPage />} />
               <Route path="/traceability" element={<TraceabilityHub />} />
               <Route path="/users" element={<UserManagement />} />
@@ -119,6 +109,17 @@ const App: React.FC = () => {
         </div>
       </div>
     </DataContext.Provider>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/*" element={<ProtectedRoutes />} />
+      </Routes>
+    </AuthProvider>
   );
 };
 

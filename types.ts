@@ -7,7 +7,6 @@ export enum UserRole {
   HeadJudge = 'Head Judge',
   Cupper = 'Cupper',
   Admin = 'Admin',
-  Consumer = 'Consumer',
 }
 
 export enum ProcessingBatchStatus {
