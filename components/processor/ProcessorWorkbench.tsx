@@ -39,11 +39,15 @@ const KanbanCard: React.FC<{ batch: ProcessingBatch; onDragStart: (e: React.Drag
   <div
     draggable
     onDragStart={(e) => onDragStart(e, batch.id)}
-    className="bg-white p-4 mb-3 rounded-lg shadow cursor-grab active:cursor-grabbing border border-gray-200"
+    className="bg-white p-4 mb-3 rounded-lg shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing border border-gray-200 hover:border-indigo-300 transition-all"
   >
-    <p className="font-semibold text-gray-800">Batch #{batch.id}</p>
-    <p className="text-sm text-gray-600">Harvest Lot: {batch.harvestLotId}</p>
-    <p className="text-sm text-gray-500">Process: {batch.processType}</p>
+    <p className="font-bold text-gray-900 mb-2">Batch #{batch.id}</p>
+    <div className="space-y-1">
+      <p className="text-xs text-gray-500">Harvest Lot:</p>
+      <p className="text-sm font-semibold text-gray-700">{batch.harvestLotId}</p>
+      <p className="text-xs text-gray-500 mt-2">Process:</p>
+      <p className="text-sm font-medium text-indigo-600">{batch.processType}</p>
+    </div>
   </div>
 );
 
@@ -51,17 +55,21 @@ const KanbanColumn: React.FC<{ title: string; status: ProcessingBatchStatus; bat
   <div
     onDrop={(e) => onDrop(e, status)}
     onDragOver={onDragOver}
-    className="bg-gray-100 rounded-lg p-4 w-full md:w-1/3 flex flex-col"
+    className="bg-gray-50 rounded-xl p-4 w-full md:w-1/3 flex flex-col border border-gray-200"
   >
-    <div className="flex items-center mb-4">
+    <div className="flex items-center mb-4 pb-3 border-b border-gray-200">
       {icon}
-      <h3 className="font-bold text-lg ml-2 text-gray-700">{title}</h3>
-      <span className="ml-auto text-sm font-semibold bg-gray-200 text-gray-600 rounded-full px-2 py-0.5">{batches.length}</span>
+      <h3 className="font-bold text-lg ml-2 text-gray-900">{title}</h3>
+      <span className="ml-auto text-sm font-bold bg-gray-900 text-white rounded-full px-3 py-1">{batches.length}</span>
     </div>
     <div className="flex-grow overflow-y-auto">
-      {batches.map(batch => (
-        <KanbanCard key={batch.id} batch={batch} onDragStart={onDragStart} />
-      ))}
+      {batches.length === 0 ? (
+        <div className="text-center text-gray-400 text-sm py-8">No batches</div>
+      ) : (
+        batches.map(batch => (
+          <KanbanCard key={batch.id} batch={batch} onDragStart={onDragStart} />
+        ))
+      )}
     </div>
   </div>
 );
@@ -409,15 +417,15 @@ const ProcessorWorkbench: React.FC = () => {
   const readyForProcessingLots = data.harvestLots.filter(lot => lot.status === 'Ready for Processing');
   
   const TableView = () => (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden mt-8">
+    <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-100">
                 <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Batch ID</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Harvest Lot</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Process</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Drying Duration</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">Batch ID</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">Harvest Lot</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">Process</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">Drying Duration</th>
                 </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -477,8 +485,8 @@ const ProcessorWorkbench: React.FC = () => {
 
     // --- Table Logic ---
     const SortableHeader = <T,>({ column, label, sortConfig, requestSort }: { column: T, label: string, sortConfig: { key: T, direction: SortDirection }, requestSort: (key: T) => void }) => (
-        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-            <button onClick={() => requestSort(column)} className="flex items-center gap-1 hover:text-gray-700">
+        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+            <button onClick={() => requestSort(column)} className="flex items-center gap-1 hover:text-indigo-600 transition-colors">
                 {label}
                 {sortConfig.key === column && (sortConfig.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
             </button>
@@ -541,12 +549,22 @@ const ProcessorWorkbench: React.FC = () => {
     const paginatedGreenBeanLots = processedGreenBeanLots.slice((greenBeanCurrentPage - 1) * ITEMS_PER_PAGE, greenBeanCurrentPage * ITEMS_PER_PAGE);
 
   return (
-    <div>
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Processor Workbench</h1>
-         <div className="flex items-center gap-2 p-1 bg-gray-200 rounded-lg">
-            <button onClick={() => setViewMode('kanban')} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${viewMode === 'kanban' ? 'bg-white text-indigo-600 shadow' : 'text-gray-600'}`}><LayoutGrid className="inline h-4 w-4 mr-1"/> Workflow</button>
-            <button onClick={() => setViewMode('table')} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${viewMode === 'table' ? 'bg-white text-indigo-600 shadow' : 'text-gray-600'}`}><List className="inline h-4 w-4 mr-1"/> Data Grid</button>
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Processor Workbench</h1>
+            <p className="text-gray-600 text-sm mt-1">Manage processing batches, parchment, and green bean inventory</p>
+          </div>
+          <div className="flex items-center gap-2 p-1 bg-gray-100 rounded-lg">
+            <button onClick={() => setViewMode('kanban')} className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${viewMode === 'kanban' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+              <LayoutGrid className="h-4 w-4"/> Workflow
+            </button>
+            <button onClick={() => setViewMode('table')} className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${viewMode === 'table' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+              <List className="h-4 w-4"/> Data Grid
+            </button>
+          </div>
         </div>
       </div>
       
@@ -564,11 +582,11 @@ const ProcessorWorkbench: React.FC = () => {
             </div>
             <div className="overflow-x-auto flex-grow">
                 <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50"><tr>
+                    <thead className="bg-gray-100"><tr>
                         <SortableHeader column="id" label="ID" sortConfig={parchmentSortConfig} requestSort={(key) => setParchmentSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))} />
                         <SortableHeader column="currentWeightKg" label="Weight" sortConfig={parchmentSortConfig} requestSort={(key) => setParchmentSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))} />
                         <SortableHeader column="status" label="Status" sortConfig={parchmentSortConfig} requestSort={(key) => setParchmentSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))} />
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">Actions</th>
                     </tr></thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {paginatedParchmentLots.map(p => (
@@ -613,13 +631,13 @@ const ProcessorWorkbench: React.FC = () => {
             </div>
             <div className="overflow-x-auto flex-grow">
                 <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50"><tr>
+                    <thead className="bg-gray-900"><tr>
                         <SortableHeader column="id" label="ID" sortConfig={greenBeanSortConfig} requestSort={(key) => setGreenBeanSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))} />
                         <SortableHeader column="grade" label="Grade" sortConfig={greenBeanSortConfig} requestSort={(key) => setGreenBeanSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))} />
                         <SortableHeader column="currentWeightKg" label="Weight" sortConfig={greenBeanSortConfig} requestSort={(key) => setGreenBeanSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))} />
                         <SortableHeader column="qcScore" label="QC Score" sortConfig={greenBeanSortConfig} requestSort={(key) => setGreenBeanSortConfig(prev => ({ key, direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))} />
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Status</th>
+                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Actions</th>
                     </tr></thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {paginatedGreenBeanLots.map(g => (
@@ -798,13 +816,13 @@ const ProcessorWorkbench: React.FC = () => {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                 <div className="bg-white rounded-lg p-8 shadow-2xl w-full max-w-lg">
                     <h2 className="text-2xl font-bold mb-4">Withdrawal History for Lot #{selectedGreenBeanForHistory.id}</h2>
-                    <div className="overflow-y-auto max-h-96 border rounded-md">
+                    <div className="overflow-y-auto max-h-96 border rounded-lg">
                         <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-gray-900">
                                 <tr>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount (kg)</th>
-                                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Purpose</th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Date</th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Amount (kg)</th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Purpose</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
