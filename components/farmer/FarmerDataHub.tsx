@@ -1,7 +1,66 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useDataContext } from '../../hooks/useDataContext';
 import { HarvestLot } from '../../types';
-import { Download, Filter, ChevronRight, Database } from 'lucide-react';
+import { Download, Filter, ChevronRight, Database, ChevronDown, Check } from 'lucide-react';
+
+// Custom Dropdown Component
+const CustomFilterDropdown: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  label: (value: string) => string;
+}> = ({ value, onChange, options, label }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-gray-400 min-w-[140px] flex items-center justify-between gap-2"
+      >
+        <span className="font-medium text-gray-900">{label(value)}</span>
+        <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-10 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto min-w-full">
+          <div className="py-1">
+            {options.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => {
+                  onChange(option);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-4 py-2 hover:bg-indigo-50 transition-colors flex items-center justify-between text-sm ${
+                  value === option ? 'bg-indigo-50' : ''
+                }`}
+              >
+                <span className="font-medium text-gray-900">{label(option)}</span>
+                {value === option && (
+                  <Check className="h-4 w-4 text-indigo-600" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const FarmerDataHub: React.FC = () => {
     const { data } = useDataContext();
@@ -83,22 +142,18 @@ const FarmerDataHub: React.FC = () => {
                             <Filter className="h-4 w-4" />
                             Filters
                         </span>
-                        <select
-                            id="yearFilter"
+                        <CustomFilterDropdown
                             value={yearFilter}
-                            onChange={e => setYearFilter(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-gray-400"
-                        >
-                            {uniqueYears.map(year => <option key={year} value={year}>{year === 'All' ? 'All Years' : year}</option>)}
-                        </select>
-                        <select
-                            id="plotFilter"
+                            onChange={setYearFilter}
+                            options={uniqueYears}
+                            label={(year) => year === 'All' ? 'All Years' : year}
+                        />
+                        <CustomFilterDropdown
                             value={plotFilter}
-                            onChange={e => setPlotFilter(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-gray-400"
-                        >
-                            {uniquePlots.map(plot => <option key={plot} value={plot}>{plot === 'All' ? 'All Locations' : plot}</option>)}
-                        </select>
+                            onChange={setPlotFilter}
+                            options={uniquePlots}
+                            label={(plot) => plot === 'All' ? 'All Locations' : plot}
+                        />
                     </div>
                     <button
                         onClick={exportToCSV}
@@ -113,15 +168,15 @@ const FarmerDataHub: React.FC = () => {
             <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-gray-900">
                             <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Lot ID</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Farmer</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Variety</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Weight</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Harvest Date</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                                <th scope="col" className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Lot ID</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Farmer</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Variety</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Weight (kg)</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Harvest Date</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Status</th>
+                                <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
                                     <span className="sr-only">View</span>
                                 </th>
                             </tr>
