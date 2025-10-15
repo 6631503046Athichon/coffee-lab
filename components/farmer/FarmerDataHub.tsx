@@ -1,7 +1,66 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useDataContext } from '../../hooks/useDataContext';
 import { HarvestLot } from '../../types';
-import { Download, Filter } from 'lucide-react';
+import { Download, Filter, ChevronRight, Database, ChevronDown, Check } from 'lucide-react';
+
+// Custom Dropdown Component
+const CustomFilterDropdown: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  label: (value: string) => string;
+}> = ({ value, onChange, options, label }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-gray-400 min-w-[140px] flex items-center justify-between gap-2"
+      >
+        <span className="font-medium text-gray-900">{label(value)}</span>
+        <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-10 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto min-w-full">
+          <div className="py-1">
+            {options.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => {
+                  onChange(option);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-4 py-2 hover:bg-indigo-50 transition-colors flex items-center justify-between text-sm ${
+                  value === option ? 'bg-indigo-50' : ''
+                }`}
+              >
+                <span className="font-medium text-gray-900">{label(option)}</span>
+                {value === option && (
+                  <Check className="h-4 w-4 text-indigo-600" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const FarmerDataHub: React.FC = () => {
     const { data } = useDataContext();
@@ -61,67 +120,111 @@ const FarmerDataHub: React.FC = () => {
     };
 
     return (
-        <div>
-            <h1 className="text-3xl font-bold text-gray-900">Data Hub</h1>
-            <p className="text-gray-600 mt-1 mb-6">Master table of all harvest data.</p>
-            
-            <div className="bg-white shadow-md rounded-lg p-4 border border-gray-200 mb-6">
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <Filter className="h-5 w-5 text-gray-500" />
-                        <span className="font-semibold text-gray-700">Filters:</span>
+        <div className="space-y-6">
+            {/* Header Section */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center gap-3">
+                    <div className="p-3 bg-indigo-100 rounded-lg">
+                        <Database className="h-7 w-7 text-indigo-600" />
                     </div>
                     <div>
-                        <label htmlFor="yearFilter" className="sr-only">Year</label>
-                        <select id="yearFilter" value={yearFilter} onChange={e => setYearFilter(e.target.value)} className="border-gray-300 rounded-md shadow-sm text-sm">
-                            {uniqueYears.map(year => <option key={year} value={year}>{year}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="plotFilter" className="sr-only">Plot</label>
-                        <select id="plotFilter" value={plotFilter} onChange={e => setPlotFilter(e.target.value)} className="border-gray-300 rounded-md shadow-sm text-sm">
-                            {uniquePlots.map(plot => <option key={plot} value={plot}>{plot}</option>)}
-                        </select>
-                    </div>
-                    <div className="ml-auto">
-                         <button onClick={exportToCSV} className="inline-flex items-center justify-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700">
-                             <Download className="h-4 w-4 mr-2" />
-                             Export CSV
-                         </button>
+                        <h1 className="text-3xl font-bold text-gray-900">Data Hub</h1>
+                        <p className="text-gray-600 text-sm">Master table of all harvest data</p>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-white shadow-md rounded-lg overflow-hidden">
+            {/* Filters and Actions Bar */}
+            <div className="bg-white shadow-sm rounded-xl p-4 border border-gray-200">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                            <Filter className="h-4 w-4" />
+                            Filters
+                        </span>
+                        <CustomFilterDropdown
+                            value={yearFilter}
+                            onChange={setYearFilter}
+                            options={uniqueYears}
+                            label={(year) => year === 'All' ? 'All Years' : year}
+                        />
+                        <CustomFilterDropdown
+                            value={plotFilter}
+                            onChange={setPlotFilter}
+                            options={uniquePlots}
+                            label={(plot) => plot === 'All' ? 'All Locations' : plot}
+                        />
+                    </div>
+                    <button
+                        onClick={exportToCSV}
+                        className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+                    >
+                        <Download className="h-4 w-4" />
+                        Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-gray-900">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lot ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Farmer</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Variety</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Weight (kg)</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Harvest Date</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Lot ID</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Farmer</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Variety</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Weight (kg)</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Harvest Date</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Status</th>
+                                <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
+                                    <span className="sr-only">View</span>
+                                </th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredLots.map((lot: HarvestLot) => (
-                                <tr key={lot.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{lot.id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lot.farmerName}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lot.cherryVariety}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lot.weightKg}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lot.harvestDate}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lot.farmPlotLocation}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${lot.status === 'Processing' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
-                                            {lot.status}
-                                        </span>
+                        <tbody className="bg-white divide-y divide-gray-100">
+                            {filteredLots.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-12 text-center">
+                                        <Database className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                                        <p className="text-gray-500 text-lg font-medium">No harvest data found</p>
+                                        <p className="text-gray-400 text-sm">Try adjusting your filters</p>
                                     </td>
                                 </tr>
-                            ))}
+                            ) : (
+                                filteredLots.map((lot: HarvestLot) => (
+                                    <tr key={lot.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                            {lot.id}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                            {lot.farmerName}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                            {lot.cherryVariety}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {lot.weightKg} kg
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                            {lot.harvestDate}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                lot.status === 'Processing'
+                                                    ? 'bg-blue-100 text-blue-800'
+                                                    : 'bg-green-100 text-green-800'
+                                            }`}>
+                                                {lot.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                            <button className="text-indigo-600 hover:text-indigo-900 font-medium">
+                                                View
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

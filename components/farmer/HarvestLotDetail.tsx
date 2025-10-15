@@ -65,7 +65,7 @@ const HarvestLotDetail: React.FC = () => {
     // --- End Data Tracing ---
 
     const statusBadge = (
-        <span className={`px-3 py-1 inline-flex text-sm leading-5 font-bold rounded-full ${
+        <span className={`px-3 py-1 inline-flex text-sm leading-5 font-medium rounded-full ${
             lot.status === 'Processing' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
         }`}>
             {lot.status}
@@ -80,10 +80,10 @@ const HarvestLotDetail: React.FC = () => {
             </Link>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
-                    <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+                    <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
                         <div className="p-6 border-b border-gray-200">
                             <h1 className="text-2xl font-bold text-gray-900">Harvest Lot Details</h1>
-                            <p className="text-gray-500">Lot ID: {lot.id}</p>
+                            <p className="text-gray-600 text-sm">Lot ID: {lot.id}</p>
                         </div>
                         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 divide-y md:divide-y-0">
                             <DetailItem icon={User} label="Farmer Name" value={lot.farmerName} />
@@ -95,21 +95,21 @@ const HarvestLotDetail: React.FC = () => {
                         </div>
                     </div>
                     {cuppingResult && mainGreenBeanLot && (
-                         <div className="bg-white shadow-lg rounded-lg mt-8">
+                         <div className="bg-white shadow-sm rounded-xl border border-gray-200 mt-8">
                              <div className="p-6 border-b border-gray-200">
-                                 <h2 className="text-xl font-bold text-gray-900 flex items-center"><Award className="text-yellow-500 mr-2"/> Quality Results</h2>
+                                 <h2 className="text-xl font-bold text-gray-900 flex items-center"><Award className="text-amber-500 mr-2 h-6 w-6"/> Quality Results</h2>
                              </div>
                              <div className="p-6 flex flex-col md:flex-row items-center gap-6">
                                 <div className="text-center">
-                                    <p className="text-sm text-gray-500 uppercase">Final Cupping Score</p>
-                                    <p className="text-7xl font-extrabold text-indigo-600">{cuppingResult.totalScore.toFixed(2)}</p>
+                                    <p className="text-sm text-gray-600 uppercase font-semibold mb-2">Final Cupping Score</p>
+                                    <p className="text-6xl font-bold text-indigo-600">{cuppingResult.totalScore.toFixed(2)}</p>
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-bold text-gray-900 mb-1">Judge's Final Notes</h3>
-                                    <blockquote className="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-300 italic text-gray-700">
+                                    <h3 className="font-semibold text-gray-900 mb-2">Judge's Final Notes</h3>
+                                    <blockquote className="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-300 text-gray-700">
                                         "{cuppingResult.finalNotes}"
                                     </blockquote>
-                                    <Link to={`/traceability/${mainGreenBeanLot.id}`} target="_blank" className="mt-3 inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800">
+                                    <Link to={`/traceability/${mainGreenBeanLot.id}`} target="_blank" className="mt-4 inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-700">
                                         View Public Traceability Page <ExternalLink className="h-4 w-4 ml-1" />
                                     </Link>
                                 </div>
