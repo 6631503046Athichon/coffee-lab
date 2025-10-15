@@ -17,7 +17,7 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
     const [selectedLot, setSelectedLot] = useState<(GreenBeanLot & { variety: string, process: string, finalScore: string | number }) | null>(null);
     const [selectedInventoryItem, setSelectedInventoryItem] = useState<(RoasterInventoryItem & { variety: string, process: string }) | null>(null);
     const [claimAmount, setClaimAmount] = useState('');
-    const [roastForm, setRoastForm] = useState({ batchSize: '', yieldPercentage: '85', notes: '', flavorNotes: '' });
+    const [roastForm, setRoastForm] = useState({ batchSize: '', roastedWeight: '', notes: '', flavorNotes: '' });
 
     const getFinalScore = (gbl: GreenBeanLot) => {
         let finalScore: string | number = 'N/A';
@@ -84,7 +84,7 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
         setRoastForm({ batchSize: '', yieldPercentage: '85', notes: '', flavorNotes: '' });
         setIsLogRoastModalOpen(true);
     };
-    
+
     const handleClaimSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const amount = parseFloat(claimAmount);
@@ -107,28 +107,53 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
         setIsClaimModalOpen(false);
     };
 
+    const to2 = (n: number) => +Number(n).toFixed(2);
+    const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
+
     const handleLogRoastSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const batchSize = parseFloat(roastForm.batchSize);
-        if (!selectedInventoryItem || !batchSize || batchSize <= 0 || batchSize > selectedInventoryItem.remainingWeightKg) return alert('Invalid batch size.');
+        if (!selectedInventoryItem) return;
+
+        const batchRaw = parseFloat(roastForm.batchSize);
+        const roastedRaw = parseFloat(roastForm.roastedWeight);
+
+        if (!batchRaw || batchRaw <= 0) return alert('Enter a valid batch size (kg).');
+        if (!roastedRaw || roastedRaw <= 0) return alert('Enter a valid roasted weight (kg).');
+        if (batchRaw > selectedInventoryItem.remainingWeightKg) return alert('Batch exceeds inventory.');
+        if (roastedRaw > batchRaw) return alert('Roasted weight cannot be greater than batch size.');
+
+        const batch = to2(clamp(batchRaw, 0.01, selectedInventoryItem.remainingWeightKg));
+        const roasted = to2(clamp(roastedRaw, 0.01, batch));
+        const yieldPct = to2((roasted / batch) * 100);
+        const weightLossPct = to2(100 - yieldPct);
 
         setData(prev => {
-            const updatedInventory = prev.roasterInventory.map(item => item.id === selectedInventoryItem.id ? { ...item, remainingWeightKg: item.remainingWeightKg - batchSize } : item);
-            const newRoast: RoastBatch = { 
-                id: `RB${String(prev.roastBatches.length + 1).padStart(3, '0')}`, 
-                roasterId: currentUser.id, 
-                roasterInventoryId: selectedInventoryItem.id, 
-                greenBeanLotId: selectedInventoryItem.greenBeanLotId, 
-                roastDate: new Date().toISOString().substring(0, 10), 
-                batchSizeKg: batchSize, 
-                yieldPercentage: parseFloat(roastForm.yieldPercentage), 
-                roastProfileNotes: roastForm.notes,
-                flavorNotes: roastForm.flavorNotes,
+            const updatedInventory = prev.roasterInventory.map(item =>
+                item.id === selectedInventoryItem.id
+                    ? { ...item, remainingWeightKg: to2(item.remainingWeightKg - batch) }
+                    : item
+            );
+
+            const newRoast: RoastBatch = {
+                id: `RB${String(prev.roastBatches.length + 1).padStart(3, '0')}`,
+                roasterId: currentUser.id,
+                roasterInventoryId: selectedInventoryItem.id,
+                greenBeanLotId: selectedInventoryItem.greenBeanLotId,
+                roastDate: new Date().toISOString().substring(0, 10),
+                batchSizeKg: batch,
+                yieldPercentage: yieldPct,     // คงเก็บไว้เพื่อ compatibility
+                roastedWeightKg: roasted,      // NEW
+                weightLossPct: weightLossPct,  // NEW
+                roastProfileNotes: roastForm.notes?.trim(),
+                flavorNotes: roastForm.flavorNotes?.trim(),
             };
+
             return { ...prev, roasterInventory: updatedInventory, roastBatches: [...prev.roastBatches, newRoast] };
         });
+
         setIsLogRoastModalOpen(false);
     };
+
 
     return (
         <div>
@@ -139,7 +164,7 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
                 <div className="lg:col-span-2 space-y-8">
                     {/* Available Lots */}
                     <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                        <div className="p-4 border-b"><h3 className="text-lg font-semibold flex items-center"><Package className="mr-2 text-green-600"/> Available Green Bean Lots</h3></div>
+                        <div className="p-4 border-b"><h3 className="text-lg font-semibold flex items-center"><Package className="mr-2 text-green-600" /> Available Green Bean Lots</h3></div>
                         <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50"><tr><th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Lot</th><th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Info</th><th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Score</th><th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Available</th><th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Action</th></tr></thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -158,7 +183,7 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
 
                     {/* My Inventory */}
                     <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                        <div className="p-4 border-b"><h3 className="text-lg font-semibold flex items-center"><Flame className="mr-2 text-orange-500"/> My Green Bean Inventory</h3></div>
+                        <div className="p-4 border-b"><h3 className="text-lg font-semibold flex items-center"><Flame className="mr-2 text-orange-500" /> My Green Bean Inventory</h3></div>
                         <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50"><tr><th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Lot</th><th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Info</th><th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Remaining</th><th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Action</th></tr></thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -167,7 +192,7 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
                                         <td className="px-4 py-2 font-medium">{item.greenBeanLotId}</td>
                                         <td className="px-4 py-2 text-sm">{item.variety} / {item.process}</td>
                                         <td className="px-4 py-2 text-sm">{item.remainingWeightKg.toFixed(2)} kg</td>
-                                        <td className="px-4 py-2"><button onClick={() => openLogRoastModal(item)} className="inline-flex items-center px-2 py-1 border text-xs rounded shadow-sm text-white bg-green-600 hover:bg-green-700"><PlusCircle className="h-4 w-4 mr-1"/> Log Roast</button></td>
+                                        <td className="px-4 py-2"><button onClick={() => openLogRoastModal(item)} className="inline-flex items-center px-2 py-1 border text-xs rounded shadow-sm text-white bg-green-600 hover:bg-green-700"><PlusCircle className="h-4 w-4 mr-1" /> Log Roast</button></td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -177,13 +202,19 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
 
                 {/* Roast Log */}
                 <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                    <div className="p-4 border-b"><h3 className="text-lg font-semibold flex items-center"><BookText className="mr-2 text-indigo-600"/> My Roast Log</h3></div>
+                    <div className="p-4 border-b"><h3 className="text-lg font-semibold flex items-center"><BookText className="mr-2 text-indigo-600" /> My Roast Log</h3></div>
                     <div className="overflow-y-auto max-h-[70vh]">
                         <ul className="divide-y divide-gray-200">
                             {myRoasts.map(roast => (
                                 <li key={roast.id} className="p-4">
                                     <p className="font-semibold">{roast.roastDate} - Lot {roast.greenBeanLotId}</p>
-                                    <p className="text-sm text-gray-600">{roast.batchSizeKg} kg roasted, {roast.yieldPercentage}% yield</p>
+                                    <p className="text-sm text-gray-600">
+                                        {roast.batchSizeKg} kg roasted,{' '}
+                                        {typeof roast.weightLossPct === 'number'
+                                            ? `${roast.weightLossPct.toFixed(1)}% weight loss`
+                                            : `${roast.yieldPercentage.toFixed(1)}% yield`}
+                                    </p>
+
                                     <p className="text-sm text-gray-500 mt-1 italic">"{roast.roastProfileNotes}"</p>
                                     {roast.flavorNotes && (
                                         <div className="mt-2 flex flex-wrap gap-1">
@@ -203,19 +234,58 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
             {isClaimModalOpen && selectedLot && <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div className="bg-white rounded-lg p-8 shadow-2xl w-full max-w-sm"><form onSubmit={handleClaimSubmit}>
                 <h2 className="text-xl font-bold mb-2">Claim Stock from Lot {selectedLot.id}</h2>
                 <p className="text-sm text-gray-600 mb-4">Available: {selectedLot.currentWeightKg.toFixed(2)} kg</p>
-                <div><label className="block text-sm font-medium">Amount to Claim (kg)</label><input type="number" step="0.1" max={selectedLot.currentWeightKg} value={claimAmount} onChange={e => setClaimAmount(e.target.value)} required className="mt-1 block w-full border-gray-300 rounded-md py-2 px-3"/></div>
+                <div><label className="block text-sm font-medium">Amount to Claim (kg)</label><input type="number" step="0.1" max={selectedLot.currentWeightKg} value={claimAmount} onChange={e => setClaimAmount(e.target.value)} required className="mt-1 block w-full border-gray-300 rounded-md py-2 px-3" /></div>
                 <div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setIsClaimModalOpen(false)} className="bg-white py-2 px-4 border rounded-md">Cancel</button><button type="submit" className="py-2 px-4 border rounded-md text-white bg-indigo-600">Claim</button></div>
             </form></div></div>}
 
-            {isLogRoastModalOpen && selectedInventoryItem && <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div className="bg-white rounded-lg p-8 shadow-2xl w-full max-w-md"><form onSubmit={handleLogRoastSubmit}>
+            {isLogRoastModalOpen && selectedInventoryItem && <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div className="bg-white rounded-lg p-8 shadow-2xl w-full max-w-xl"><form onSubmit={handleLogRoastSubmit}>
                 <h2 className="text-xl font-bold mb-2">Log Roast for Lot {selectedInventoryItem.greenBeanLotId}</h2>
                 <p className="text-sm text-gray-600 mb-4">Inventory remaining: {selectedInventoryItem.remainingWeightKg.toFixed(2)} kg</p>
                 <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div><label className="block text-sm font-medium">Batch Size (kg)</label><input type="number" step="0.1" max={selectedInventoryItem.remainingWeightKg} value={roastForm.batchSize} onChange={e => setRoastForm({...roastForm, batchSize: e.target.value})} required className="mt-1 block w-full border-gray-300 rounded-md py-2 px-3"/></div>
-                        <div><label className="block text-sm font-medium">Yield (%)</label><input type="number" step="1" value={roastForm.yieldPercentage} onChange={e => setRoastForm({...roastForm, yieldPercentage: e.target.value})} required className="mt-1 block w-full border-gray-300 rounded-md py-2 px-3"/></div>
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium">Batch Size (kg)</label>
+                            <input
+                                type="number"
+                                min={0.01}
+                                step="0.01"
+                                max={selectedInventoryItem.remainingWeightKg}
+                                value={roastForm.batchSize}
+                                onChange={e => setRoastForm({ ...roastForm, batchSize: e.target.value })}
+                                required
+                                className="mt-1 block w-full border-gray-300 rounded-md py-2 px-3"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium">Roasted Weight (kg)</label>
+                            <input
+                                type="number"
+                                min={0.01}
+                                step="0.01"
+                                value={roastForm.roastedWeight}
+                                onChange={e => setRoastForm({ ...roastForm, roastedWeight: e.target.value })}
+                                required
+                                className="mt-1 block w-full border-gray-300 rounded-md py-2 px-3"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium">Weight Loss / Yield</label>
+                            <div className="mt-1 text-sm text-gray-700 border rounded-md py-2 px-3 bg-gray-50">
+                                {(() => {
+                                    const b = parseFloat(roastForm.batchSize || '0');
+                                    const r = parseFloat(roastForm.roastedWeight || '0');
+                                    if (!b || !r) return '—';
+                                    const yieldPct = (r / b) * 100;
+                                    const lossPct = 100 - yieldPct;
+                                    return `${lossPct.toFixed(1)}% loss • ${yieldPct.toFixed(1)}% yield`;
+                                })()}
+                            </div>
+                        </div>
                     </div>
-                    <div><label className="block text-sm font-medium">Roast Profile Notes</label><textarea rows={3} value={roastForm.notes} onChange={e => setRoastForm({...roastForm, notes: e.target.value})} className="mt-1 block w-full border-gray-300 rounded-md"></textarea></div>
+
+                    <div><label className="block text-sm font-medium">Roast Profile Notes</label><textarea rows={3} value={roastForm.notes} onChange={e => setRoastForm({ ...roastForm, notes: e.target.value })} className="mt-1 block w-full border-gray-300 rounded-md"></textarea></div>
                     <div>
                         <label className="block text-sm font-medium">Flavor Notes</label>
                         <input
