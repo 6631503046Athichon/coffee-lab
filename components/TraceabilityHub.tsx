@@ -73,14 +73,14 @@ const TraceabilityHub: React.FC = () => {
                 <div className="overflow-x-auto">
                     <table className="min-w-full">
                         <thead>
-                            <tr className="bg-gray-50 border-b border-gray-200">
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Lot ID</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Variety</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Process</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Grade</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Final Score</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Action</th>
+                            <tr className="bg-gray-900 border-b border-gray-200">
+                                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Lot ID</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Variety</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Process</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Grade</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Final Score</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-100">
