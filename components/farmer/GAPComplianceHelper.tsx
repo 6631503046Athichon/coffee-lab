@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { useDataContext } from '../../hooks/useDataContext';
 import { GAPActivityType, GAPLogEntry } from '../../types';
-import { PlusCircle, Filter, FileText, Printer, X, CheckCircle, ChevronDown, Check } from 'lucide-react';
+import { PlusCircle, Filter, FileText, Printer, X, CheckCircle, ChevronDown, Check, Edit, Trash2 } from 'lucide-react';
 
 // Custom Dropdown Component for Plot Selection
 const CustomPlotDropdown: React.FC<{
@@ -30,7 +30,7 @@ const CustomPlotDropdown: React.FC<{
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 bg-white text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-gray-400"
+        className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 bg-white text-left focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all hover:border-gray-400"
       >
         <div className="flex items-center justify-between">
           <span className={value ? "text-gray-900 font-medium" : "text-gray-500"}>
@@ -93,7 +93,7 @@ const CustomActivityTypeDropdown: React.FC<{
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 bg-white text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-gray-400"
+        className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 bg-white text-left focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all hover:border-gray-400"
       >
         <div className="flex items-center justify-between">
           <span className="text-gray-900 font-medium">{value}</span>
@@ -143,7 +143,10 @@ const GAPComplianceHelper: React.FC = () => {
     const [activityFilter, setActivityFilter] = React.useState('All');
     const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
     
+    const [editingLog, setEditingLog] = React.useState<GAPLogEntry | null>(null);
+    
     const reportContentRef = React.useRef<HTMLDivElement>(null);
+    const formRef = React.useRef<HTMLDivElement>(null);
 
     const uniquePlots = React.useMemo(() => {
         const plots = new Set(data.farms.map(f => f.location));
@@ -152,11 +155,26 @@ const GAPComplianceHelper: React.FC = () => {
 
     const handleLogSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const newId = `GAP${String(data.gapLogs.length + 1).padStart(3, '0')}`;
-        const newLog: GAPLogEntry = {
-            id: newId, farmPlotLocation, activityType, date, productUsed, quantity, notes
-        };
-        setData(prev => ({ ...prev, gapLogs: [newLog, ...prev.gapLogs] }));
+        
+        if (editingLog) {
+            // Update existing log
+            setData(prev => ({
+                ...prev,
+                gapLogs: prev.gapLogs.map(log =>
+                    log.id === editingLog.id
+                        ? { ...log, farmPlotLocation, activityType, date, productUsed, quantity, notes }
+                        : log
+                )
+            }));
+            setEditingLog(null);
+        } else {
+            // Create new log
+            const newId = `GAP${String(data.gapLogs.length + 1).padStart(3, '0')}`;
+            const newLog: GAPLogEntry = {
+                id: newId, farmPlotLocation, activityType, date, productUsed, quantity, notes
+            };
+            setData(prev => ({ ...prev, gapLogs: [newLog, ...prev.gapLogs] }));
+        }
         
         // Reset form
         setFarmPlotLocation('');
@@ -167,6 +185,39 @@ const GAPComplianceHelper: React.FC = () => {
         setNotes('');
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
+    };
+    
+    const handleEdit = (log: GAPLogEntry) => {
+        setEditingLog(log);
+        setFarmPlotLocation(log.farmPlotLocation);
+        setActivityType(log.activityType);
+        setDate(log.date);
+        setProductUsed(log.productUsed);
+        setQuantity(log.quantity);
+        setNotes(log.notes);
+        // Scroll to form
+        setTimeout(() => {
+            formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    };
+    
+    const handleCancelEdit = () => {
+        setEditingLog(null);
+        setFarmPlotLocation('');
+        setActivityType(GAPActivityType.Fertilizer);
+        setDate(new Date().toISOString().substring(0, 10));
+        setProductUsed('');
+        setQuantity('');
+        setNotes('');
+    };
+    
+    const handleDelete = (logId: string) => {
+        if (confirm('Are you sure you want to delete this activity log?')) {
+            setData(prev => ({
+                ...prev,
+                gapLogs: prev.gapLogs.filter(log => log.id !== logId)
+            }));
+        }
     };
     
     const filteredLogs = React.useMemo(() => {
@@ -219,12 +270,26 @@ const GAPComplianceHelper: React.FC = () => {
             </div>
 
                 {/* Log New Activity Card */}
-                <div className="bg-white shadow-sm rounded-xl p-8 border border-gray-200">
-                    <div className="flex items-center gap-2 mb-6">
-                        <div className="p-2 bg-indigo-100 rounded-lg">
-                            <PlusCircle className="h-5 w-5 text-indigo-600" />
+                <div ref={formRef} className="bg-white shadow-sm rounded-xl p-8 border border-gray-200">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-indigo-100 rounded-lg">
+                                <PlusCircle className="h-5 w-5 text-indigo-600" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                {editingLog ? 'Edit Activity' : 'Log New Activity'}
+                            </h2>
                         </div>
-                        <h2 className="text-2xl font-bold text-gray-900">Log New Activity</h2>
+                        {editingLog && (
+                            <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition-colors"
+                            >
+                                <X className="h-4 w-4" />
+                                Cancel Edit
+                            </button>
+                        )}
                     </div>
 
                     <form onSubmit={handleLogSubmit} className="space-y-6">
@@ -255,7 +320,7 @@ const GAPComplianceHelper: React.FC = () => {
                                     value={date}
                                     onChange={e => setDate(e.target.value)}
                                     required
-                                    className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white hover:border-gray-400"
+                                    className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white hover:border-gray-400"
                                 />
                             </div>
                         </div>
@@ -269,7 +334,7 @@ const GAPComplianceHelper: React.FC = () => {
                                     onChange={e => setProductUsed(e.target.value)}
                                     required
                                     placeholder="e.g., Organic Compost, Neem Oil"
-                                    className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white hover:border-gray-400 placeholder-gray-400"
+                                    className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white hover:border-gray-400 placeholder-gray-400"
                                 />
                             </div>
                             <div>
@@ -280,7 +345,7 @@ const GAPComplianceHelper: React.FC = () => {
                                     onChange={e => setQuantity(e.target.value)}
                                     required
                                     placeholder="e.g., 200 kg, 5 L, 2 hours"
-                                    className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white hover:border-gray-400 placeholder-gray-400"
+                                    className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white hover:border-gray-400 placeholder-gray-400"
                                 />
                             </div>
                         </div>
@@ -292,7 +357,7 @@ const GAPComplianceHelper: React.FC = () => {
                                 onChange={e => setNotes(e.target.value)}
                                 rows={4}
                                 placeholder="Optional notes about this activity..."
-                                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white hover:border-gray-400 resize-none placeholder-gray-400"
+                                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all bg-white hover:border-gray-400 resize-none placeholder-gray-400"
                             ></textarea>
                         </div>
 
@@ -300,15 +365,26 @@ const GAPComplianceHelper: React.FC = () => {
                             {showSuccess && (
                                 <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-lg border border-green-200">
                                     <CheckCircle className="h-5 w-5" />
-                                    <span className="font-semibold">Activity logged successfully!</span>
+                                    <span className="font-semibold">
+                                        {editingLog ? 'Activity updated successfully!' : 'Activity logged successfully!'}
+                                    </span>
                                 </div>
                             )}
                             <button
                                 type="submit"
                                 className="ml-auto inline-flex items-center gap-2 justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors"
                             >
-                                <PlusCircle className="h-4 w-4" />
-                                Log Activity
+                                {editingLog ? (
+                                    <>
+                                        <CheckCircle className="h-4 w-4" />
+                                        Update Activity
+                                    </>
+                                ) : (
+                                    <>
+                                        <PlusCircle className="h-4 w-4" />
+                                        Log Activity
+                                    </>
+                                )}
                             </button>
                         </div>
                     </form>
@@ -357,6 +433,7 @@ const GAPComplianceHelper: React.FC = () => {
                                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Product/Method</th>
                                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Quantity</th>
                                     <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Notes</th>
+                                    <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-100">
@@ -372,6 +449,24 @@ const GAPComplianceHelper: React.FC = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{log.productUsed}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{log.quantity}</td>
                                         <td className="px-6 py-4 text-sm text-gray-600">{log.notes}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <button
+                                                    onClick={() => handleEdit(log)}
+                                                    className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(log.id)}
+                                                    className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

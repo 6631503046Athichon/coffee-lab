@@ -35,7 +35,7 @@ const CustomDropdown: React.FC<{
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-gray-400 flex items-center justify-between gap-2 shadow-sm"
+        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all hover:border-gray-400 flex items-center justify-between gap-2 shadow-sm"
       >
         <span className={selectedOption ? "text-gray-900" : "text-gray-500"}>
           {selectedOption ? selectedOption.label : placeholder}

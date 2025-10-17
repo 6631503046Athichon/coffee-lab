@@ -79,7 +79,7 @@ const Login: React.FC = () => {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-4 py-3.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition shadow-sm hover:border-gray-400"
+                  className="w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition shadow-sm hover:border-gray-400"
                   placeholder="your.email@coffee.com"
                 />
               </div>
@@ -95,7 +95,7 @@ const Login: React.FC = () => {
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-3.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition shadow-sm hover:border-gray-400"
+                  className="w-full px-4 py-3.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition shadow-sm hover:border-gray-400"
                   placeholder="••••••••"
                 />
               </div>
@@ -138,7 +138,6 @@ const Login: React.FC = () => {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800">Demo Accounts</h2>
-                  <p className="text-sm text-gray-600">Click any account to login instantly</p>
                 </div>
               </div>
             </div>

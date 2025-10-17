@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDataContext } from '../hooks/useDataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
-import { Coffee, Droplets, FlaskConical, TrendingUp, Users, Award, PackageCheck } from 'lucide-react';
+import { Coffee, Droplets, FlaskConical, TrendingUp, Users, Award, PackageCheck, Package, PlusCircle, BookText } from 'lucide-react';
 
 const StatCard: React.FC<{
   icon: React.ReactNode;
@@ -38,12 +38,45 @@ const Dashboard: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  // Filter data based on user role
   const isAdmin = currentUser?.role === UserRole.Admin;
   const isFarmer = currentUser?.role === UserRole.Farmer;
   const isProcessor = currentUser?.role === UserRole.Processor;
   const isCupper = currentUser?.role === UserRole.Cupper || currentUser?.role === UserRole.HeadJudge;
   const isRoaster = currentUser?.role === UserRole.Roaster;
+
+  const hasAvailableGreenBeans = React.useMemo(
+    () => data.greenBeanLots.some(lot => lot.availabilityStatus === 'Available' && lot.currentWeightKg > 0),
+    [data.greenBeanLots]
+  );
+
+  const hasRoasterInventory = React.useMemo(
+    () => data.roasterInventory.some(item => item.roasterId === currentUser?.id && item.remainingWeightKg > 0.01),
+    [data.roasterInventory, currentUser?.id]
+  );
+
+  const handleRoasterQuickAction = (action: 'claim' | 'logRoast' | 'viewLog') => {
+    switch (action) {
+      case 'claim':
+        if (!hasAvailableGreenBeans) {
+          alert('No green bean stock is available to claim right now.');
+          return;
+        }
+        navigate('/roaster', { state: { quickAction: 'claim' } });
+        break;
+      case 'logRoast':
+        if (!hasRoasterInventory) {
+          alert('You do not have inventory yet. Claim a lot first.');
+          return;
+        }
+        navigate('/roaster', { state: { quickAction: 'logRoast' } });
+        break;
+      case 'viewLog':
+        navigate('/roaster', { state: { quickAction: 'viewLog' } });
+        break;
+      default:
+        break;
+    }
+  };
 
   // Calculate stats based on role
   let activeLots = 0;
@@ -54,7 +87,6 @@ const Dashboard: React.FC = () => {
   let greenBeanLots = 0;
 
   if (isAdmin) {
-    // Admin sees all data
     activeLots = data.harvestLots.length;
     processingBatches = data.processingBatches.filter(b => b.status !== 'Completed').length;
     completedBatches = data.processingBatches.filter(b => b.status === 'Completed').length;
@@ -62,11 +94,8 @@ const Dashboard: React.FC = () => {
     totalUsers = data.users.length;
     greenBeanLots = data.greenBeanLots.length;
   } else if (isFarmer) {
-    // Farmer sees only their data
     const farmerLots = data.harvestLots.filter(lot => lot.farmerName === currentUser?.name);
     activeLots = farmerLots.length;
-
-    // Processing batches related to farmer's lots
     const farmerLotIds = farmerLots.map(lot => lot.id);
     processingBatches = data.processingBatches.filter(b =>
       farmerLotIds.includes(b.harvestLotId) && b.status !== 'Completed'
@@ -75,19 +104,16 @@ const Dashboard: React.FC = () => {
       farmerLotIds.includes(b.harvestLotId) && b.status === 'Completed'
     ).length;
   } else if (isProcessor) {
-    // Processor sees processing-related data
     processingBatches = data.processingBatches.filter(b => b.status !== 'Completed').length;
     completedBatches = data.processingBatches.filter(b => b.status === 'Completed').length;
     greenBeanLots = data.greenBeanLots.length;
   } else if (isCupper) {
-    // Cupper sees cupping-related data
     cuppingSessions = data.cuppingSessions.length;
     greenBeanLots = data.greenBeanLots.length;
   } else if (isRoaster) {
-    // Roaster sees roasting-related data
     greenBeanLots = data.greenBeanLots.filter(lot => lot.availabilityStatus === 'Available').length;
     const roasterInventory = data.roasterInventory.filter(item => item.roasterId === currentUser?.id);
-    totalUsers = roasterInventory.length; // Using this as roaster inventory count
+    totalUsers = roasterInventory.length; // Interpreted as roaster inventory count
   }
 
   return (
@@ -155,11 +181,11 @@ const Dashboard: React.FC = () => {
           {(isAdmin || isProcessor || isCupper || isRoaster) && (
             <StatCard
               icon={<Coffee className="h-7 w-7" />}
-              title={isRoaster ? "Available Green Beans" : "Green Bean Lots"}
+              title={isRoaster ? 'Available Green Beans' : 'Green Bean Lots'}
               value={greenBeanLots}
               bgColor="bg-emerald-100"
               iconColor="text-emerald-700"
-              subtitle={isRoaster ? "Ready to claim" : "Available inventory"}
+              subtitle={isRoaster ? 'Ready to claim' : 'Available inventory'}
             />
           )}
           {isAdmin && (
@@ -178,48 +204,91 @@ const Dashboard: React.FC = () => {
       {/* Quick Actions */}
       <div>
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {(isAdmin || isFarmer) && (
-            <button
-              onClick={() => navigate('/farmer-dashboard')}
-              className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-amber-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
-            >
-              <Coffee className="h-8 w-8 text-amber-600 mb-3" />
-              <h3 className="font-bold text-gray-800 mb-1">New Harvest</h3>
-              <p className="text-sm text-gray-600">Record a new harvest lot</p>
-            </button>
-          )}
-          {(isAdmin || isProcessor) && (
-            <button
-              onClick={() => navigate('/processor')}
-              className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-blue-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
-            >
-              <Droplets className="h-8 w-8 text-blue-600 mb-3" />
-              <h3 className="font-bold text-gray-800 mb-1">Start Processing</h3>
-              <p className="text-sm text-gray-600">Begin new processing batch</p>
-            </button>
-          )}
-          {(isAdmin || isCupper) && (
-            <button
-              onClick={() => navigate('/cupping')}
-              className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-purple-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
-            >
-              <FlaskConical className="h-8 w-8 text-purple-600 mb-3" />
-              <h3 className="font-bold text-gray-800 mb-1">New Session</h3>
-              <p className="text-sm text-gray-600">Create cupping session</p>
-            </button>
-          )}
-          {isAdmin && (
-            <button
-              onClick={() => navigate('/insights')}
-              className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-green-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
-            >
-              <Award className="h-8 w-8 text-green-600 mb-3" />
-              <h3 className="font-bold text-gray-800 mb-1">View Reports</h3>
-              <p className="text-sm text-gray-600">Quality insights & analytics</p>
-            </button>
-          )}
-        </div>
+        {isRoaster ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[{
+              key: 'claim' as const,
+              title: 'Quick Claim',
+              description: 'Open the claim modal with the next available lot.',
+              iconBg: 'bg-green-100 text-green-600',
+              icon: <Package className="h-6 w-6" />,
+              disabled: !hasAvailableGreenBeans,
+            }, {
+              key: 'logRoast' as const,
+              title: 'Log a Roast',
+              description: 'Start a roast entry from your latest inventory.',
+              iconBg: 'bg-orange-100 text-orange-600',
+              icon: <PlusCircle className="h-6 w-6" />,
+              disabled: !hasRoasterInventory,
+            }, {
+              key: 'viewLog' as const,
+              title: 'View Roast Log',
+              description: 'Jump to your roasting history and flavor notes.',
+              iconBg: 'bg-indigo-100 text-indigo-600',
+              icon: <BookText className="h-6 w-6" />,
+              disabled: false,
+            }].map(action => (
+              <button
+                key={action.key}
+                type="button"
+                onClick={() => !action.disabled && handleRoasterQuickAction(action.key)}
+                className={`bg-white border border-gray-200 rounded-2xl p-6 text-left shadow-sm transition-all ${
+                  action.disabled ? 'cursor-not-allowed opacity-60' : 'hover:-translate-y-1 hover:shadow-lg hover:border-indigo-200'
+                }`}
+                aria-disabled={action.disabled}
+              >
+                <span className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${action.iconBg}`}>
+                  {action.icon}
+                </span>
+                <h3 className="font-bold text-gray-900 mb-1">{action.title}</h3>
+                <p className="text-sm text-gray-600">{action.description}</p>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {(isAdmin || isFarmer) && (
+              <button
+                onClick={() => navigate('/farmer-dashboard')}
+                className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-amber-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
+              >
+                <Coffee className="h-8 w-8 text-amber-600 mb-3" />
+                <h3 className="font-bold text-gray-800 mb-1">New Harvest</h3>
+                <p className="text-sm text-gray-600">Record a new harvest lot</p>
+              </button>
+            )}
+            {(isAdmin || isProcessor) && (
+              <button
+                onClick={() => navigate('/processor')}
+                className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-blue-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
+              >
+                <Droplets className="h-8 w-8 text-blue-600 mb-3" />
+                <h3 className="font-bold text-gray-800 mb-1">Start Processing</h3>
+                <p className="text-sm text-gray-600">Begin new processing batch</p>
+              </button>
+            )}
+            {(isAdmin || isCupper) && (
+              <button
+                onClick={() => navigate('/cupping')}
+                className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-purple-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
+              >
+                <FlaskConical className="h-8 w-8 text-purple-600 mb-3" />
+                <h3 className="font-bold text-gray-800 mb-1">New Session</h3>
+                <p className="text-sm text-gray-600">Create cupping session</p>
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={() => navigate('/insights')}
+                className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-green-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
+              >
+                <Award className="h-8 w-8 text-green-600 mb-3" />
+                <h3 className="font-bold text-gray-800 mb-1">View Reports</h3>
+                <p className="text-sm text-gray-600">Quality insights & analytics</p>
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
