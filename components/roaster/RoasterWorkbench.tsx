@@ -160,7 +160,7 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
                     <div className="bg-white shadow-md rounded-lg overflow-hidden">
                         <div className="p-4 border-b"><h3 className="text-lg font-semibold flex items-center"><Flame className="mr-2 text-orange-500"/> My Green Bean Inventory</h3></div>
                         <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50"><tr><th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Lot</th><th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Info</th><th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Remaining</th><th className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Action</th></tr></thead>
+                            <thead className="bg-gray-50"><tr><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Lot</th><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Info</th><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Remaining</th><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Action</th></tr></thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {myInventory.map(item => (
                                     <tr key={item.id}>
