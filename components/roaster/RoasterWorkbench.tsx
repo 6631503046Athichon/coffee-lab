@@ -1,9 +1,9 @@
 
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useDataContext } from '../../hooks/useDataContext';
 import { User, GreenBeanLot, RoasterInventoryItem, RoastBatch } from '../../types';
-import { Flame, Package, BookText, PlusCircle, ChevronsRight, Award, X } from 'lucide-react';
+import { Flame, Package, BookText, PlusCircle, ChevronsRight, Award, X, ChevronDown, Check } from 'lucide-react';
 
 
 interface RoasterWorkbenchProps {
@@ -18,6 +18,69 @@ const FLAVOR_GROUPS: Record<string, string[]> = {
     Spicy: ['Cinnamon', 'Clove', 'Black Pepper'],
     Roasted: ['Toasted', 'Smoky'],
     Other: ['Earthy', 'Woody', 'Herbal'],
+};
+
+// Custom Dropdown Component
+const CustomDropdown: React.FC<{
+    value: string;
+    onChange: (value: string) => void;
+    options: string[];
+    placeholder: string;
+}> = ({ value, onChange, options, placeholder }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    return (
+        <div ref={dropdownRef} className="relative">
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className="block w-full border-2 border-orange-300 rounded-xl shadow-sm py-2.5 px-3 bg-white text-left focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-500 transition-all hover:border-orange-400"
+            >
+                <div className="flex items-center justify-between">
+                    <span className={value ? "text-gray-900 font-semibold" : "text-gray-500"}>
+                        {value || placeholder}
+                    </span>
+                    <ChevronDown className={`h-5 w-5 text-orange-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                </div>
+            </button>
+
+            {isOpen && (
+                <div className="absolute z-10 w-full mt-2 bg-white border-2 border-orange-200 rounded-xl shadow-xl max-h-60 overflow-auto">
+                    <div className="py-1">
+                        {options.map((option) => (
+                            <button
+                                key={option}
+                                type="button"
+                                onClick={() => {
+                                    onChange(option);
+                                    setIsOpen(false);
+                                }}
+                                className={`w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors flex items-center justify-between ${
+                                    value === option ? 'bg-orange-50' : ''
+                                }`}
+                            >
+                                <span className="text-sm font-semibold text-gray-900">{option}</span>
+                                {value === option && (
+                                    <Check className="h-5 w-5 text-orange-600" />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 };
 
 
@@ -186,287 +249,442 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
 
     return (
         <div>
-            <h1 className="text-3xl font-bold text-gray-900">Roaster's Workbench</h1>
-            <p className="text-gray-600 mt-1 mb-8">Claim green bean lots, manage inventory, and log your roasts.</p>
+            {/* Header Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-8">
+                <h1 className="text-3xl font-bold text-gray-900">Roaster's Workbench</h1>
+                <p className="text-gray-600 mt-2">Claim green bean lots, manage inventory, and log your roasts.</p>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
                     {/* Available Lots */}
-                    <div className="bg-gray-900 text-white shadow-md rounded-lg overflow-hidden">
-                        <div className="p-4 border-b"><h3 className="text-lg font-semibold flex items-center"><Package className="mr-2 text-green-600" /> Available Green Bean Lots</h3></div>
-                        <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50"><tr><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Lot</th><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Info</th><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Score</th><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Available</th><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Action</th></tr></thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {availableLots.map(lot => (
-                                    <tr key={lot.id}>
-                                        <td className="px-4 py-2 text-black font-medium">{lot.id}</td>
-                                        <td className="px-4 py-2 text-black text-sm">{lot.variety} / {lot.process}</td>
-                                        <td className="px-4 py-2 text-black text-sm font-bold">{lot.finalScore}</td>
-                                        <td className="px-4 py-2 text-black text-sm">{lot.currentWeightKg.toFixed(2)} kg</td>
-                                        <td className="px-4 py-2"><button onClick={() => openClaimModal(lot)} className="inline-flex items-center px-2 py-1 border text-xs rounded shadow-sm text-white bg-green-600 hover:bg-green-700">Claim Stock</button></td>
+                    <div className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
+                        <div className="p-5 border-b border-gray-200">
+                            <h3 className="text-xl font-bold flex items-center text-gray-900">
+                                <div className="p-2 bg-green-100 rounded-lg mr-3">
+                                    <Package className="h-5 w-5 text-green-600" />
+                                </div>
+                                Available Green Bean Lots
+                            </h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-900">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Lot</th>
+                                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Info</th>
+                                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Score</th>
+                                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Available</th>
+                                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Action</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table></div>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {availableLots.map((lot, index) => (
+                                        <tr key={lot.id} className="bg-white hover:bg-gray-50 transition-colors duration-150">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="text-sm font-bold text-gray-900">{lot.id}</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm">
+                                                    <span className="text-gray-700 font-medium">{lot.variety}</span>
+                                                    <span className="text-gray-500 mx-1">/</span>
+                                                    <span className="text-gray-600">{lot.process}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="text-sm font-bold text-indigo-600">{lot.finalScore}</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="text-sm text-gray-700 font-semibold">{lot.currentWeightKg.toFixed(2)} kg</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <button
+                                                    onClick={() => openClaimModal(lot)}
+                                                    className="inline-flex items-center px-4 py-2 text-sm font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                                                >
+                                                    Claim Stock
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     {/* My Inventory */}
-                    <div className="bg-gray-900 text-white shadow-md rounded-lg overflow-hidden">
-                        <div className="p-4 border-b"><h3 className="text-lg font-semibold flex items-center"><Flame className="mr-2 text-orange-500" /> My Green Bean Inventory</h3></div>
-                        <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50"><tr><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Lot</th><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Info</th><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Remaining</th><th className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Action</th></tr></thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {myInventory.map(item => (
-                                    <tr key={item.id}>
-                                        <td className="px-4 py-2 text-black font-medium">{item.greenBeanLotId}</td>
-                                        <td className="px-4 py-2 text-black text-sm">{item.variety} / {item.process}</td>
-                                        <td className="px-4 py-2 text-black text-sm">{item.remainingWeightKg.toFixed(2)} kg</td>
-                                        <td className="px-4 py-2 "><button onClick={() => openLogRoastModal(item)} className="inline-flex items-center px-2 py-1 border text-xs rounded shadow-sm text-white bg-orange-600 hover:bg-orange-700"><PlusCircle className="h-4 w-4 mr-1" /> Log Roast</button></td>
+                    <div className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
+                        <div className="p-5 border-b border-gray-200">
+                            <h3 className="text-xl font-bold flex items-center text-gray-900">
+                                <div className="p-2 bg-orange-100 rounded-lg mr-3">
+                                    <Flame className="h-5 w-5 text-orange-600" />
+                                </div>
+                                My Green Bean Inventory
+                            </h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-900">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Lot</th>
+                                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Info</th>
+                                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Remaining</th>
+                                        <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Action</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table></div>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {myInventory.map((item, index) => (
+                                        <tr key={item.id} className="bg-white hover:bg-gray-50 transition-colors duration-150">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="text-sm font-bold text-gray-900">{item.greenBeanLotId}</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm">
+                                                    <span className="text-gray-700 font-medium">{item.variety}</span>
+                                                    <span className="text-gray-500 mx-1">/</span>
+                                                    <span className="text-gray-600">{item.process}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="text-sm text-gray-700 font-semibold">{item.remainingWeightKg.toFixed(2)} kg</span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <button
+                                                    onClick={() => openLogRoastModal(item)}
+                                                    className="inline-flex items-center px-4 py-2 text-sm font-bold rounded-lg text-white bg-green-600 hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                                                >
+                                                    <PlusCircle className="h-4 w-4 mr-1.5" />
+                                                    Log Roast
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
                 {/* Roast Log */}
-                <div className="bg-white text-gray-900 shadow-md rounded-lg overflow-hidden">
-                    <div className="p-4 bg-gray-900 text-white border-b border-gray-700">
-                        <h3 className="text-lg font-semibold flex items-center">
-                            <BookText className="mr-2 text-indigo-400" /> My Roast Log
+                <div className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
+                    <div className="p-5 border-b border-gray-200">
+                        <h3 className="text-xl font-bold flex items-center text-gray-900">
+                            <div className="p-2 bg-indigo-100 rounded-lg mr-3">
+                                <BookText className="h-5 w-5 text-indigo-600" />
+                            </div>
+                            My Roast Log
                         </h3>
                     </div>
                     {/* Content */}
-                    <div className="overflow-y-auto max-h-[70vh]">
-                        <ul className="divide-y divide-gray-200">
-                            {myRoasts.map((roast) => (
-                                <li key={roast.id} className="p-4 hover:bg-gray-50 transition">
-                                    <p className="font-semibold text-gray-900">
-                                        {roast.roastDate} - Lot {roast.greenBeanLotId}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        {roast.batchSizeKg} kg roasted,{' '}
-                                        {typeof roast.weightLossPct === 'number'
-                                            ? `${roast.weightLossPct.toFixed(1)}% weight loss`
-                                            : `${roast.yieldPercentage.toFixed(1)}% yield`}
-                                    </p>
-                                    {roast.roastProfileNotes && (
-                                        <p className="text-sm text-gray-500 mt-1 italic">
-                                            "{roast.roastProfileNotes}"
-                                        </p>
-                                    )}
-                                    {roast.flavorNotes && (
-                                        <div className="mt-2 flex flex-wrap gap-1">
-                                            {roast.flavorNotes
-                                                .split(',')
-                                                .map((note) => note.trim())
-                                                .filter(Boolean)
-                                                .map((note, index) => (
-                                                    <span
-                                                        key={index}
-                                                        className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full"
-                                                    >
-                                                        {note}
+                    <div className="overflow-y-auto max-h-[70vh] bg-gray-50 p-4">
+                        {myRoasts.length === 0 ? (
+                            <div className="text-center py-12">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-200 mb-4">
+                                    <BookText className="h-8 w-8 text-gray-400" />
+                                </div>
+                                <p className="text-gray-500 font-medium">No roasts logged yet</p>
+                                <p className="text-sm text-gray-400 mt-1">Start roasting to see your log here</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {myRoasts.map((roast) => (
+                                    <div key={roast.id} className="bg-white rounded-xl p-4 border border-gray-200 hover:border-orange-300 hover:shadow-lg transition-all duration-200 group">
+                                        {/* Header */}
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                        {roast.roastDate}
                                                     </span>
-                                                ))}
+                                                    <span className="text-sm font-bold text-gray-900">Lot {roast.greenBeanLotId}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700">
+                                                        <span className="font-bold text-gray-900">{roast.batchSizeKg.toFixed(2)}</span>&nbsp;kg
+                                                    </span>
+                                                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200">
+                                                        {typeof roast.weightLossPct === 'number'
+                                                            ? `${roast.yieldPercentage.toFixed(1)}% yield`
+                                                            : `${roast.yieldPercentage.toFixed(1)}% yield`}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="p-2 bg-orange-50 rounded-lg group-hover:bg-orange-100 transition-colors">
+                                                <Flame className="h-5 w-5 text-orange-600" />
+                                            </div>
                                         </div>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
+
+                                        {/* Notes */}
+                                        {roast.roastProfileNotes && (
+                                            <div className="mb-3 bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                                <p className="text-sm text-gray-700 italic leading-relaxed">
+                                                    "{roast.roastProfileNotes}"
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* Flavor Tags */}
+                                        {roast.flavorNotes && (
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {roast.flavorNotes
+                                                    .split(',')
+                                                    .map((note) => note.trim())
+                                                    .filter(Boolean)
+                                                    .map((note, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className="inline-flex items-center px-2.5 py-1 bg-yellow-50 text-yellow-800 text-xs font-semibold rounded-md border border-yellow-200"
+                                                        >
+                                                            {note}
+                                                        </span>
+                                                    ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
             </div>
 
             {/* Modals */}
-            {isClaimModalOpen && selectedLot && <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div className="bg-white rounded-lg p-8 shadow-2xl w-full max-w-sm"><form onSubmit={handleClaimSubmit}>
-                <h2 className="text-xl font-bold mb-2">Claim Stock from Lot {selectedLot.id}</h2>
-                <p className="text-sm text-gray-600 mb-4">Available: {selectedLot.currentWeightKg.toFixed(2)} kg</p>
-                <div><label className="block text-sm font-medium">Amount to Claim (kg)</label><input type="number" step="0.1" max={selectedLot.currentWeightKg} value={claimAmount} onChange={e => setClaimAmount(e.target.value)} required className="mt-1 block w-full border-gray-300 rounded-md py-2 px-3" /></div>
-                <div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setIsClaimModalOpen(false)} className="bg-white py-2 px-4 border rounded-md">Cancel</button><button type="submit" className="py-2 px-4 border rounded-md text-white bg-indigo-600">Claim</button></div>
-            </form></div></div>}
-
-            {isLogRoastModalOpen && selectedInventoryItem && <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"><div className="bg-white rounded-lg p-8 shadow-2xl w-full max-w-xl"><form onSubmit={handleLogRoastSubmit}>
-                <h2 className="text-xl font-bold mb-2">Log Roast for Lot {selectedInventoryItem.greenBeanLotId}</h2>
-                <p className="text-sm text-gray-600 mb-4">Inventory remaining: {selectedInventoryItem.remainingWeightKg.toFixed(2)} kg</p>
-                <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium">Batch Size (kg)</label>
-                            <input
-                                type="number"
-                                min={0.01}
-                                step="0.01"
-                                required
-                                // จำกัดไม่ให้เกินสต็อกคงเหลือ
-                                max={selectedInventoryItem.remainingWeightKg}
-                                value={roastForm.batchSize}
-                                onChange={(e) => setRoastForm({ ...roastForm, batchSize: e.target.value })}
-                                // ข้อความเตือนของเบราว์เซอร์เมื่อ invalid
-                                onInvalid={(e) =>
-                                    (e.currentTarget as HTMLInputElement).setCustomValidity(
-                                        `Batch size must be between 0.01 and ${selectedInventoryItem.remainingWeightKg.toFixed(2)} kg`
-                                    )
-                                }
-                                onInput={(e) => (e.currentTarget as HTMLInputElement).setCustomValidity('')}
-                                className="mt-1 block w-full border-gray-300 rounded-md py-2 px-3 bg-gray-50"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium">Roasted Weight (kg)</label>
-                            <input
-                                type="number"
-                                min={0.01}
-                                step="0.01"
-                                required
-                                // จำกัดไม่ให้เกิน batch ที่กรอกไว้ (ทำให้เกิด bubble ทันทีเวลาใส่เกิน)
-                                max={parseFloat(roastForm.batchSize) || undefined}
-                                value={roastForm.roastedWeight}
-                                onChange={(e) => setRoastForm({ ...roastForm, roastedWeight: e.target.value })}
-                                onInvalid={(e) =>
-                                    (e.currentTarget as HTMLInputElement).setCustomValidity(
-                                        parseFloat(roastForm.batchSize)
-                                            ? `Roasted weight cannot exceed batch size (${parseFloat(roastForm.batchSize).toFixed(2)} kg)`
-                                            : 'Please enter batch size first'
-                                    )
-                                }
-                                onInput={(e) => (e.currentTarget as HTMLInputElement).setCustomValidity('')}
-                                className="mt-1 block w-full border-gray-300 rounded-md py-2 px-3 bg-gray-50"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium">Weight Loss / Yield</label>
-                            <div className="mt-1 text-sm text-gray-900 rounded-md py-2 px-3 bg-gray-50">
-                                {(() => {
-                                    const b = parseFloat(roastForm.batchSize || '0');
-                                    const r = parseFloat(roastForm.roastedWeight || '0');
-                                    if (!b || !r) return '—';
-                                    const yieldPct = (r / b) * 100;
-                                    const lossPct = 100 - yieldPct;
-                                    return `${lossPct.toFixed(1)}% loss • ${yieldPct.toFixed(1)}% yield`;
-                                })()}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>{/* Roast Profile Notes */}
-                        <div>
-                            <label className="block text-sm font-medium">Roast Profile Notes</label>
-                            <textarea
-                                rows={3}
-                                value={roastForm.notes}
-                                onChange={e => setRoastForm({ ...roastForm, notes: e.target.value })}
-                                onInput={e => {
-                                    const el = e.currentTarget;
-                                    el.style.height = 'auto';
-                                    el.style.height = el.scrollHeight + 'px';
-                                }}
-                                className="mt-1 block w-full border-gray-300 rounded-md bg-gray-50 resize-none overflow-y-auto max-h-40 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent py-2 px-3"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium">Flavor Notes</label>
-
-                        <div className="mt-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            {/* Aroma Types */}
-                            <div className="relative">
-                                <span className="block text-xs text-gray-500 mb-1">Aroma Types</span>
-                                <select
-                                    aria-label="Aroma Types"
-                                    value={selectedCategory}
-                                    onChange={(e) => {
-                                        const cat = e.target.value as keyof typeof FLAVOR_GROUPS;
-                                        setSelectedCategory(cat);
-                                        setSelectedNote(FLAVOR_GROUPS[cat][0]);
-                                    }}
-                                    className="block w-full rounded-lg border border-gray-300 bg-white py-2 px-3 pr-10
-                 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500
-                 focus:border-transparent"
-                                >
-                                    {Object.keys(FLAVOR_GROUPS).map((cat) => (
-                                        <option key={cat} value={cat}>{cat}</option>
-                                    ))}
-                                </select>
-                                {/* ลูกศร */}
-                                <svg
-                                    className="pointer-events-none absolute right-3 top-[38px] -translate-y-1/2 h-4 w-4 text-gray-500"
-                                    viewBox="0 0 20 20" fill="currentColor"
-                                >
-                                    <path d="M5.25 7.5L10 12.25 14.75 7.5H5.25z" />
-                                </svg>
+            {isClaimModalOpen && selectedLot && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl p-8 shadow-2xl w-full max-w-md border border-gray-200">
+                        <form onSubmit={handleClaimSubmit}>
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-3 bg-green-100 rounded-xl">
+                                    <Package className="h-6 w-6 text-green-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">Claim Stock</h2>
+                                    <p className="text-sm text-gray-500">from Lot {selectedLot.id}</p>
+                                </div>
                             </div>
 
-                            {/* Aroma */}
-                            <div className="relative">
-                                <span className="block text-xs text-gray-500 mb-1">Aroma</span>
-                                <select
-                                    aria-label="Aroma"
-                                    value={selectedNote}
-                                    onChange={(e) => setSelectedNote(e.target.value)}
-                                    className="block w-full rounded-lg border border-gray-300 bg-white py-2 px-3 pr-10
-                 appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500
-                 focus:border-transparent"
-                                >
-                                    {FLAVOR_GROUPS[selectedCategory].map((note) => (
-                                        <option key={note} value={note}>{note}</option>
-                                    ))}
-                                </select>
-                                <svg
-                                    className="pointer-events-none absolute right-3 top-[38px] -translate-y-1/2 h-4 w-4 text-gray-500"
-                                    viewBox="0 0 20 20" fill="currentColor"
-                                >
-                                    <path d="M5.25 7.5L10 12.25 14.75 7.5H5.25z" />
-                                </svg>
+                            <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+                                <p className="text-sm font-medium text-green-900">Available Stock</p>
+                                <p className="text-3xl font-bold text-green-700">{selectedLot.currentWeightKg.toFixed(2)} kg</p>
                             </div>
 
-                            {/* ปุ่มเพิ่ม */}
-                            <div className="flex items-end">
+                            <div className="mb-6">
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Amount to Claim (kg)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    max={selectedLot.currentWeightKg}
+                                    value={claimAmount}
+                                    onChange={e => setClaimAmount(e.target.value)}
+                                    required
+                                    className="block w-full border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl py-3 px-4 text-lg font-semibold transition-all duration-200"
+                                    placeholder="0.00"
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3">
                                 <button
                                     type="button"
-                                    aria-label="เพิ่มกลิ่น"
-                                    onClick={() => {
-                                        if (selectedNote && !selectedFlavorTags.includes(selectedNote)) {
-                                            setSelectedFlavorTags((prev) => [...prev, selectedNote]);
-                                        }
-                                    }}
-                                    className="inline-flex items-center justify-center rounded-lg bg-orange-500
-                 text-white px-3 py-2 w-full hover:bg-orange-600"
+                                    onClick={() => setIsClaimModalOpen(false)}
+                                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200"
                                 >
-                                    Add
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                                >
+                                    Claim Stock
                                 </button>
                             </div>
-                        </div>
-
-                        {/* แสดงแท็กกลิ่นที่เลือกแล้ว */}
-                        <div className="mt-3 flex flex-wrap gap-2">
-                            {selectedFlavorTags.map((tag) => (
-                                <span
-                                    key={tag}
-                                    className="inline-flex items-center gap-2 rounded-full bg-yellow-100
-                 text-yellow-800 text-xs font-medium px-3 py-1"
-                                >
-                                    {tag}
-                                    <button
-                                        type="button"
-                                        onClick={() => setSelectedFlavorTags((prev) => prev.filter(t => t !== tag))}
-                                        className="ml-1 text-yellow-900/70 hover:text-yellow-900"
-                                        aria-label={`ลบ ${tag}`}
-                                    >
-                                        ✕
-                                    </button>
-                                </span>
-                            ))}
-                        </div>
-
+                        </form>
                     </div>
-
                 </div>
-                <div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setIsLogRoastModalOpen(false)} className="bg-white py-2 px-4 border rounded-md">Cancel</button><button type="submit" className="py-2 px-4 border rounded-md bg-orange-500 text-white px-3 py-2 hover:bg-orange-700">Log Roast</button></div>
-            </form></div></div>}
+            )}
+
+            {isLogRoastModalOpen && selectedInventoryItem && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl p-8 shadow-2xl w-full max-w-2xl border border-gray-200 max-h-[90vh] overflow-y-auto">
+                        <form onSubmit={handleLogRoastSubmit}>
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-3 bg-orange-100 rounded-xl">
+                                    <Flame className="h-6 w-6 text-orange-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">Log Roast</h2>
+                                    <p className="text-sm text-gray-500">for Lot {selectedInventoryItem.greenBeanLotId}</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
+                                <p className="text-sm font-medium text-orange-900">Inventory Remaining</p>
+                                <p className="text-3xl font-bold text-orange-700">{selectedInventoryItem.remainingWeightKg.toFixed(2)} kg</p>
+                            </div>
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Batch Size (kg)</label>
+                                        <input
+                                            type="number"
+                                            min={0.01}
+                                            step="0.01"
+                                            required
+                                            max={selectedInventoryItem.remainingWeightKg}
+                                            value={roastForm.batchSize}
+                                            onChange={(e) => setRoastForm({ ...roastForm, batchSize: e.target.value })}
+                                            onInvalid={(e) =>
+                                                (e.currentTarget as HTMLInputElement).setCustomValidity(
+                                                    `Batch size must be between 0.01 and ${selectedInventoryItem.remainingWeightKg.toFixed(2)} kg`
+                                                )
+                                            }
+                                            onInput={(e) => (e.currentTarget as HTMLInputElement).setCustomValidity('')}
+                                            className="block w-full border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 rounded-xl py-2.5 px-3 font-semibold transition-all duration-200"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Roasted Weight (kg)</label>
+                                        <input
+                                            type="number"
+                                            min={0.01}
+                                            step="0.01"
+                                            required
+                                            max={parseFloat(roastForm.batchSize) || undefined}
+                                            value={roastForm.roastedWeight}
+                                            onChange={(e) => setRoastForm({ ...roastForm, roastedWeight: e.target.value })}
+                                            onInvalid={(e) =>
+                                                (e.currentTarget as HTMLInputElement).setCustomValidity(
+                                                    parseFloat(roastForm.batchSize)
+                                                        ? `Roasted weight cannot exceed batch size (${parseFloat(roastForm.batchSize).toFixed(2)} kg)`
+                                                        : 'Please enter batch size first'
+                                                )
+                                            }
+                                            onInput={(e) => (e.currentTarget as HTMLInputElement).setCustomValidity('')}
+                                            className="block w-full border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 rounded-xl py-2.5 px-3 font-semibold transition-all duration-200"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Weight Loss / Yield</label>
+                                        <div className="bg-gray-100 border-2 border-gray-300 rounded-xl py-2.5 px-3 text-sm font-bold text-gray-700">
+                                            {(() => {
+                                                const b = parseFloat(roastForm.batchSize || '0');
+                                                const r = parseFloat(roastForm.roastedWeight || '0');
+                                                if (!b || !r) return '—';
+                                                const yieldPct = (r / b) * 100;
+                                                const lossPct = 100 - yieldPct;
+                                                return `${lossPct.toFixed(1)}% loss • ${yieldPct.toFixed(1)}% yield`;
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Roast Profile Notes</label>
+                                    <textarea
+                                        rows={3}
+                                        value={roastForm.notes}
+                                        onChange={e => setRoastForm({ ...roastForm, notes: e.target.value })}
+                                        onInput={e => {
+                                            const el = e.currentTarget;
+                                            el.style.height = 'auto';
+                                            el.style.height = el.scrollHeight + 'px';
+                                        }}
+                                        className="block w-full border-2 border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 rounded-xl py-3 px-4 resize-none overflow-y-auto max-h-40 transition-all duration-200"
+                                        placeholder="e.g., Medium roast profile. First crack at 9:30. Dropped at 11:15."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Flavor Notes</label>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        {/* Aroma Types */}
+                                        <div>
+                                            <span className="block text-xs font-medium text-gray-600 mb-1">Aroma Types</span>
+                                            <CustomDropdown
+                                                value={selectedCategory}
+                                                onChange={(cat) => {
+                                                    const category = cat as keyof typeof FLAVOR_GROUPS;
+                                                    setSelectedCategory(category);
+                                                    setSelectedNote(FLAVOR_GROUPS[category][0]);
+                                                }}
+                                                options={Object.keys(FLAVOR_GROUPS)}
+                                                placeholder="Select type..."
+                                            />
+                                        </div>
+
+                                        {/* Aroma */}
+                                        <div>
+                                            <span className="block text-xs font-medium text-gray-600 mb-1">Aroma</span>
+                                            <CustomDropdown
+                                                value={selectedNote}
+                                                onChange={setSelectedNote}
+                                                options={FLAVOR_GROUPS[selectedCategory]}
+                                                placeholder="Select aroma..."
+                                            />
+                                        </div>
+
+                                        {/* ปุ่มเพิ่ม */}
+                                        <div className="flex items-end">
+                                            <button
+                                                type="button"
+                                                aria-label="เพิ่มกลิ่น"
+                                                onClick={() => {
+                                                    if (selectedNote && !selectedFlavorTags.includes(selectedNote)) {
+                                                        setSelectedFlavorTags((prev) => [...prev, selectedNote]);
+                                                    }
+                                                }}
+                                                className="inline-flex items-center justify-center rounded-xl bg-orange-500 text-white font-semibold px-4 py-2.5 w-full hover:bg-orange-600 transition-all duration-200 shadow-md hover:shadow-lg"
+                                            >
+                                                Add
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* แสดงแท็กกลิ่นที่เลือกแล้ว */}
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        {selectedFlavorTags.map((tag) => (
+                                            <span
+                                                key={tag}
+                                                className="inline-flex items-center gap-2 rounded-full bg-yellow-100 text-yellow-800 text-sm font-semibold px-4 py-1.5 border border-yellow-200"
+                                            >
+                                                {tag}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedFlavorTags((prev) => prev.filter(t => t !== tag))}
+                                                    className="ml-1 text-yellow-700 hover:text-yellow-900 font-bold"
+                                                    aria-label={`ลบ ${tag}`}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div className="mt-8 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsLogRoastModalOpen(false)}
+                                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                                >
+                                    Log Roast
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

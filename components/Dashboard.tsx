@@ -181,7 +181,7 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {(isAdmin || isFarmer) && (
             <button
-              onClick={() => navigate('/farmer')}
+              onClick={() => navigate('/farmer-dashboard')}
               className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-amber-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
             >
               <Coffee className="h-8 w-8 text-amber-600 mb-3" />
@@ -211,7 +211,7 @@ const Dashboard: React.FC = () => {
           )}
           {isAdmin && (
             <button
-              onClick={() => navigate('/quality-insights')}
+              onClick={() => navigate('/insights')}
               className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-green-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
             >
               <Award className="h-8 w-8 text-green-600 mb-3" />

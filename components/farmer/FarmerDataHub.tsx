@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDataContext } from '../../hooks/useDataContext';
 import { HarvestLot, User, UserRole } from '../../types';
-import { Download, Filter, ChevronRight, Database, ChevronDown, Check, Edit, Trash2 } from 'lucide-react';
+import { Download, Filter, ChevronRight, Database, ChevronDown, Check, Edit, Trash2, X } from 'lucide-react';
 
 // Custom Dropdown Component
 const CustomFilterDropdown: React.FC<{
@@ -73,6 +73,18 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
     const [yearFilter, setYearFilter] = useState<string>('All');
     const [plotFilter, setPlotFilter] = useState<string>('All');
 
+    // Edit Modal State
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingLot, setEditingLot] = useState<HarvestLot | null>(null);
+    const [editFormData, setEditFormData] = useState({
+        farmerName: '',
+        cherryVariety: '',
+        weightKg: '',
+        harvestDate: '',
+        farmPlotLocation: '',
+        status: 'Ready for Processing'
+    });
+
     const uniqueYears = useMemo(() => {
         const years = new Set(data.harvestLots.map(lot => new Date(lot.harvestDate).getFullYear().toString()));
         // fix: Explicitly type sort callback parameters to resolve TS error
@@ -103,9 +115,46 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
         }
     };
 
-    const handleEdit = (lotId: string, e: React.MouseEvent) => {
+    const openEditModal = (lot: HarvestLot, e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent row click
-        navigate(`/farmer-dashboard/${lotId}`);
+        setEditingLot(lot);
+        setEditFormData({
+            farmerName: lot.farmerName,
+            cherryVariety: lot.cherryVariety,
+            weightKg: lot.weightKg.toString(),
+            harvestDate: lot.harvestDate,
+            farmPlotLocation: lot.farmPlotLocation,
+            status: lot.status
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const closeEditModal = () => {
+        setIsEditModalOpen(false);
+        setEditingLot(null);
+    };
+
+    const handleEditSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingLot) return;
+
+        setData(prev => ({
+            ...prev,
+            harvestLots: prev.harvestLots.map(lot =>
+                lot.id === editingLot.id
+                    ? {
+                        ...lot,
+                        farmerName: editFormData.farmerName,
+                        cherryVariety: editFormData.cherryVariety,
+                        weightKg: parseFloat(editFormData.weightKg),
+                        harvestDate: editFormData.harvestDate,
+                        farmPlotLocation: editFormData.farmPlotLocation,
+                        status: editFormData.status as 'Ready for Processing' | 'Processing'
+                    }
+                    : lot
+            )
+        }));
+        closeEditModal();
     };
 
     const exportToCSV = () => {
@@ -248,7 +297,7 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
                                             {isAdmin ? (
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
-                                                        onClick={(e) => handleEdit(lot.id, e)}
+                                                        onClick={(e) => openEditModal(lot, e)}
                                                         className="text-indigo-600 hover:text-indigo-900 p-1 rounded-md hover:bg-indigo-50 transition-colors"
                                                         title="Edit"
                                                     >
@@ -277,6 +326,121 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
                     </table>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            {isEditModalOpen && editingLot && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
+                    <div className="bg-white rounded-xl p-8 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-gray-800">Edit Harvest Lot</h2>
+                            <button onClick={closeEditModal} className="text-gray-500 hover:text-gray-800 transition-colors">
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleEditSubmit}>
+                            <div className="space-y-5">
+                                <div>
+                                    <label htmlFor="edit-lotId" className="block text-sm font-semibold text-gray-700 mb-2">Lot ID</label>
+                                    <input
+                                        type="text"
+                                        id="edit-lotId"
+                                        value={editingLot.id}
+                                        disabled
+                                        className="block w-full border-2 border-gray-200 rounded-xl shadow-sm py-2.5 px-3 bg-gray-50 text-gray-500 cursor-not-allowed"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="edit-farmerName" className="block text-sm font-semibold text-gray-700 mb-2">Farmer Name</label>
+                                    <input
+                                        type="text"
+                                        id="edit-farmerName"
+                                        value={editFormData.farmerName}
+                                        onChange={e => setEditFormData({ ...editFormData, farmerName: e.target.value })}
+                                        required
+                                        className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="edit-cherryVariety" className="block text-sm font-semibold text-gray-700 mb-2">Cherry Variety</label>
+                                    <input
+                                        type="text"
+                                        id="edit-cherryVariety"
+                                        value={editFormData.cherryVariety}
+                                        onChange={e => setEditFormData({ ...editFormData, cherryVariety: e.target.value })}
+                                        required
+                                        className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label htmlFor="edit-weightKg" className="block text-sm font-semibold text-gray-700 mb-2">Weight (kg)</label>
+                                        <input
+                                            type="number"
+                                            id="edit-weightKg"
+                                            value={editFormData.weightKg}
+                                            onChange={e => setEditFormData({ ...editFormData, weightKg: e.target.value })}
+                                            required
+                                            min="0"
+                                            step="0.01"
+                                            className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="edit-harvestDate" className="block text-sm font-semibold text-gray-700 mb-2">Harvest Date</label>
+                                        <input
+                                            type="date"
+                                            id="edit-harvestDate"
+                                            value={editFormData.harvestDate}
+                                            onChange={e => setEditFormData({ ...editFormData, harvestDate: e.target.value })}
+                                            required
+                                            className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label htmlFor="edit-farmPlotLocation" className="block text-sm font-semibold text-gray-700 mb-2">Farm Plot Location</label>
+                                    <input
+                                        type="text"
+                                        id="edit-farmPlotLocation"
+                                        value={editFormData.farmPlotLocation}
+                                        onChange={e => setEditFormData({ ...editFormData, farmPlotLocation: e.target.value })}
+                                        required
+                                        className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="edit-status" className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                                    <select
+                                        id="edit-status"
+                                        value={editFormData.status}
+                                        onChange={e => setEditFormData({ ...editFormData, status: e.target.value })}
+                                        required
+                                        className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                    >
+                                        <option value="Ready for Processing">Ready for Processing</option>
+                                        <option value="Processing">Processing</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="mt-8 flex justify-end space-x-3">
+                                <button
+                                    type="button"
+                                    onClick={closeEditModal}
+                                    className="bg-white py-2.5 px-5 border-2 border-gray-300 rounded-lg shadow-sm text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="inline-flex justify-center py-2.5 px-5 border border-transparent shadow-sm text-sm font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -194,9 +194,9 @@ const QualityInsights: React.FC = () => {
 
     return (
         <div className="space-y-8">
-            <div>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                 <h1 className="text-3xl font-bold text-gray-900">Quality Insights Dashboard</h1>
-                <p className="text-gray-600 mt-1">High-level analytics and AI-powered tools for quality improvement.</p>
+                <p className="text-gray-600 mt-2">High-level analytics and AI-powered tools for quality improvement.</p>
             </div>
 
             {/* --- Annual Quality Report --- */}
