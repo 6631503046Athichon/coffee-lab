@@ -635,55 +635,60 @@ const ProcessorWorkbench: React.FC<ProcessorWorkbenchProps> = ({ currentUser }) 
   const readyForProcessingLots = data.harvestLots.filter(lot => lot.status === 'Ready for Processing');
   
   const TableView = () => (
-    <div className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
-        <table className="min-w-full">
-            <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Batch ID</th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Harvest Lot</th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Process</th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Drying Duration</th>
-                </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-                {data.processingBatches.map(b => {
-                    const duration = b.dryingStartDate && b.dryingEndDate ? `${(new Date(b.dryingEndDate).getTime() - new Date(b.dryingStartDate).getTime()) / (1000 * 3600 * 24)} days` : 'N/A';
-                    return (
-                        <tr key={b.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <span className="text-sm font-bold text-gray-900">{b.id}</span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <span className="text-sm text-gray-700">{b.harvestLotId}</span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full ${b.processType === 'Washed' ? 'bg-blue-500' : b.processType === 'Natural' ? 'bg-amber-500' : 'bg-yellow-500'}`}></div>
-                                    <span className="text-sm font-medium text-gray-900">{b.processType}</span>
-                                </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-3 py-1.5 inline-flex items-center gap-1.5 text-xs font-bold rounded-lg ${
-                                    b.status === 'Completed' ? 'bg-green-100 text-green-700 border border-green-200' :
-                                    b.status === 'Drying' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                                    'bg-yellow-100 text-yellow-700 border border-yellow-200'
-                                }`}>
-                                    {b.status === 'Completed' && <CheckCircle className="h-3 w-3" />}
-                                    {b.status === 'Drying' && <Wind className="h-3 w-3" />}
-                                    {b.status === 'To Process' && <PlayCircle className="h-3 w-3" />}
-                                    {b.status}
-                                </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                                <span className="text-sm text-gray-700">{duration}</span>
-                            </td>
-                        </tr>
-                    )
-                })}
-            </tbody>
-        </table>
+  <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200">
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-900">
+          <tr>
+            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Batch ID</th>
+            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Harvest Lot</th>
+            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Process</th>
+            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Status</th>
+            <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Drying Duration</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-100">
+          {data.processingBatches.map(b => {
+            const duration = b.dryingStartDate && b.dryingEndDate
+              ? `${Math.max(1, Math.round((new Date(b.dryingEndDate).getTime() - new Date(b.dryingStartDate).getTime()) / (1000 * 3600 * 24)))} days`
+              : 'N/A';
+            const durationClass = duration === 'N/A' ? 'text-sm font-medium text-gray-400' : 'text-sm font-medium text-gray-700';
+            return (
+              <tr key={b.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                  {b.id}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  {b.harvestLotId}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-block h-2 w-2 rounded-full ${b.processType === 'Washed' ? 'bg-blue-500' : b.processType === 'Natural' ? 'bg-amber-500' : 'bg-yellow-500'}`}></span>
+                    <span className="text-sm font-medium text-gray-900">{b.processType}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full border ${
+                    b.status === 'Completed' ? 'bg-green-100 text-green-700 border-green-200' :
+                    b.status === 'Drying' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                    'bg-yellow-100 text-yellow-700 border-yellow-200'
+                  }`}>
+                    {b.status === 'Completed' && <CheckCircle className="h-3 w-3" />}
+                    {b.status === 'Drying' && <Wind className="h-3 w-3" />}
+                    {b.status === 'To Process' && <PlayCircle className="h-3 w-3" />}
+                    {b.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={durationClass}>{duration}</span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
+  </div>
   );
   
   const KanbanView = () => (

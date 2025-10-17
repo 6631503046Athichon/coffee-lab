@@ -1,9 +1,10 @@
 
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useDataContext } from '../../hooks/useDataContext';
 import { User, GreenBeanLot, RoasterInventoryItem, RoastBatch } from '../../types';
-import { Flame, Package, BookText, PlusCircle, ChevronsRight, Award, X, ChevronDown, Check } from 'lucide-react';
+import { Flame, Package, BookText, PlusCircle, Award, X, ChevronDown, Check } from 'lucide-react';
 
 
 interface RoasterWorkbenchProps {
@@ -86,6 +87,8 @@ const CustomDropdown: React.FC<{
 
 const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
     const { data, setData } = useDataContext();
+    const location = useLocation();
+    const navigate = useNavigate();
 
     const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
     const [isLogRoastModalOpen, setIsLogRoastModalOpen] = useState(false);
@@ -96,6 +99,9 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
     const [selectedCategory, setSelectedCategory] = useState<keyof typeof FLAVOR_GROUPS>('Sweet');
     const [selectedNote, setSelectedNote] = useState<string>(FLAVOR_GROUPS['Sweet'][0]);
     const [selectedFlavorTags, setSelectedFlavorTags] = useState<string[]>([]);
+    const availableLotsRef = useRef<HTMLDivElement>(null);
+    const inventoryRef = useRef<HTMLDivElement>(null);
+    const roastLogRef = useRef<HTMLDivElement>(null);
 
 
     const getFinalScore = (gbl: GreenBeanLot) => {
@@ -246,6 +252,47 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
         setIsLogRoastModalOpen(false);
     };
 
+    const handleQuickClaim = () => {
+        if (availableLots.length === 0) {
+            alert('No green bean lots are available to claim right now.');
+            return;
+        }
+        availableLotsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        openClaimModal(availableLots[0]);
+    };
+
+    const handleQuickLogRoast = () => {
+        if (myInventory.length === 0) {
+            alert('You do not have inventory to log a roast. Claim a lot first.');
+            return;
+        }
+        inventoryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        openLogRoastModal(myInventory[0]);
+    };
+
+    const scrollToRoastLog = () => {
+        roastLogRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+
+    const quickActionHandlers = useRef({
+        claim: handleQuickClaim,
+        logRoast: handleQuickLogRoast,
+        viewLog: scrollToRoastLog,
+    });
+    quickActionHandlers.current = {
+        claim: handleQuickClaim,
+        logRoast: handleQuickLogRoast,
+        viewLog: scrollToRoastLog,
+    };
+
+    useEffect(() => {
+        const state = location.state as { quickAction?: 'claim' | 'logRoast' | 'viewLog' } | null;
+        if (!state?.quickAction) return;
+        const action = quickActionHandlers.current[state.quickAction];
+        if (action) action();
+        navigate(location.pathname, { replace: true });
+    }, [location, navigate]);
 
     return (
         <div>
@@ -258,7 +305,7 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
                     {/* Available Lots */}
-                    <div className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
+                    <div ref={availableLotsRef} className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
                         <div className="p-5 border-b border-gray-200">
                             <h3 className="text-xl font-bold flex items-center text-gray-900">
                                 <div className="p-2 bg-green-100 rounded-lg mr-3">
@@ -313,7 +360,7 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
                     </div>
 
                     {/* My Inventory */}
-                    <div className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
+                    <div ref={inventoryRef} className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
                         <div className="p-5 border-b border-gray-200">
                             <h3 className="text-xl font-bold flex items-center text-gray-900">
                                 <div className="p-2 bg-orange-100 rounded-lg mr-3">
@@ -366,7 +413,7 @@ const RoasterWorkbench: React.FC<RoasterWorkbenchProps> = ({ currentUser }) => {
                 </div>
 
                 {/* Roast Log */}
-                <div className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
+                <div ref={roastLogRef} className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
                     <div className="p-5 border-b border-gray-200">
                         <h3 className="text-xl font-bold flex items-center text-gray-900">
                             <div className="p-2 bg-indigo-100 rounded-lg mr-3">

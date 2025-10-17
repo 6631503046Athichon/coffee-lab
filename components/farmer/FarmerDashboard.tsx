@@ -53,7 +53,7 @@ const CustomFarmDropdown: React.FC<{
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 bg-white text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-gray-400"
+        className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 bg-white text-left focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all hover:border-gray-400"
       >
         <div className="flex items-center justify-between">
           <span className={selectedFarm ? "text-gray-900 font-medium" : "text-gray-500"}>
@@ -127,7 +127,7 @@ const CustomVarietyDropdown: React.FC<{
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 bg-white text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-gray-400"
+        className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 bg-white text-left focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all hover:border-gray-400"
       >
         <div className="flex items-center justify-between">
           <span className={value ? "text-gray-900 font-medium" : "text-gray-500"}>
@@ -368,11 +368,11 @@ const FarmerDashboard: React.FC = () => {
           <form onSubmit={handleFarmSubmit} className="space-y-5">
               <div>
                   <label htmlFor="newFarmerName" className="block text-sm font-semibold text-gray-700 mb-2">Farmer Name</label>
-                  <input type="text" id="newFarmerName" value={newFarmerName} onChange={e => setNewFarmerName(e.target.value)} required className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" placeholder="Enter farmer name" />
+                  <input type="text" id="newFarmerName" value={newFarmerName} onChange={e => setNewFarmerName(e.target.value)} required className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Enter farmer name" />
               </div>
               <div>
                   <label htmlFor="newFarmLocation" className="block text-sm font-semibold text-gray-700 mb-2">Farm Location / Plot</label>
-                  <input type="text" id="newFarmLocation" value={newFarmLocation} onChange={e => setNewFarmLocation(e.target.value)} required className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" placeholder="Enter location" />
+                  <input type="text" id="newFarmLocation" value={newFarmLocation} onChange={e => setNewFarmLocation(e.target.value)} required className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="Enter location" />
               </div>
               <div className="flex items-end justify-between h-12 pt-2">
                   {showFarmSuccess && (
@@ -416,7 +416,7 @@ const FarmerDashboard: React.FC = () => {
                 </div>
                 <div>
                     <label htmlFor="weightKg" className="block text-sm font-semibold text-gray-700 mb-2">Weight (kg)</label>
-                    <input type="number" id="weightKg" value={weightKg} onChange={e => setWeightKg(e.target.value)} required className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" placeholder="0" />
+                    <input type="number" id="weightKg" value={weightKg} onChange={e => setWeightKg(e.target.value)} required className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all" placeholder="0" />
                 </div>
               </div>
               <div>
@@ -426,7 +426,7 @@ const FarmerDashboard: React.FC = () => {
                   value={harvestDate}
                   onChange={(e) => setHarvestDate(e.target.value)}
                   required
-                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  className="block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                 />
               </div>
               <div className="flex items-end justify-between h-12 pt-2">

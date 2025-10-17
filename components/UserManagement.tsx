@@ -27,7 +27,7 @@ const CustomRoleDropdown: React.FC<{
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full border-2 border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-gray-400 flex items-center justify-between gap-2"
+        className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all hover:border-gray-400 flex items-center justify-between gap-2"
       >
         <span className="font-medium text-gray-900">{value}</span>
         <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -190,7 +190,7 @@ const UserManagement: React.FC = () => {
                                         value={userName}
                                         onChange={e => setUserName(e.target.value)}
                                         required
-                                        className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        className="block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                                     />
                                 </div>
                                 <div>
@@ -203,7 +203,7 @@ const UserManagement: React.FC = () => {
                                 </div>
                             </div>
                             <div className="mt-8 flex justify-end space-x-3">
-                                <button type="button" onClick={closeModal} className="bg-white py-2.5 px-5 border-2 border-gray-300 rounded-lg shadow-sm text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+                                <button type="button" onClick={closeModal} className="bg-white py-2.5 px-5 border border-gray-300 rounded-lg shadow-sm text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
                                 <button type="submit" className="inline-flex justify-center py-2.5 px-5 border border-transparent shadow-sm text-sm font-semibold rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors">{editingUser ? 'Save Changes' : 'Create User'}</button>
                             </div>
                         </form>

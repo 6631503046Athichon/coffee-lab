@@ -29,7 +29,7 @@ const CustomFilterDropdown: React.FC<{
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-gray-400 min-w-[140px] flex items-center justify-between gap-2"
+        className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all hover:border-gray-400 min-w-[140px] flex items-center justify-between gap-2"
       >
         <span className="font-medium text-gray-900">{label(value)}</span>
         <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -190,6 +190,9 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
     };
 
     const isAdmin = currentUser.role === UserRole.Admin;
+    const canEdit = (lot: HarvestLot) => {
+        return isAdmin || lot.farmerName === currentUser.name;
+    };
 
     return (
         <div className="space-y-6">
@@ -248,9 +251,8 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
                                 <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Weight (kg)</th>
                                 <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Harvest Date</th>
                                 <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Status</th>
-                                <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
-                                    {isAdmin ? 'Actions' : <span className="sr-only">View</span>}
-                                </th>
+                                <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Actions</th>
+                                <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">Details</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-100">
@@ -294,30 +296,38 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                            {isAdmin ? (
+                                            {canEdit(lot) ? (
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
                                                         onClick={(e) => openEditModal(lot, e)}
-                                                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded-md hover:bg-indigo-50 transition-colors"
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-transparent text-blue-600 transition-colors hover:border-blue-100 hover:bg-blue-50 hover:text-blue-700"
                                                         title="Edit"
                                                     >
                                                         <Edit className="h-4 w-4" />
                                                     </button>
                                                     <button
                                                         onClick={(e) => handleDelete(lot.id, e)}
-                                                        className="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50 transition-colors"
+                                                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-transparent text-red-600 transition-colors hover:border-red-100 hover:bg-red-50 hover:text-red-700"
                                                         title="Delete"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <button
-                                                    className="text-indigo-600 hover:text-indigo-900 font-semibold hover:underline transition-colors"
-                                                >
-                                                    View
-                                                </button>
+                                                <span className="text-xs font-medium text-gray-400">—</span>
                                             )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/farmer-dashboard/${lot.id}`);
+                                                }}
+                                                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-transparent text-indigo-600 transition-colors hover:border-indigo-100 hover:bg-indigo-50 hover:text-indigo-700"
+                                                title="Open details"
+                                            >
+                                                <ChevronRight className="h-4 w-4" />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
@@ -357,7 +367,7 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
                                         value={editFormData.farmerName}
                                         onChange={e => setEditFormData({ ...editFormData, farmerName: e.target.value })}
                                         required
-                                        className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        className="block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                                     />
                                 </div>
                                 <div>
@@ -368,7 +378,7 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
                                         value={editFormData.cherryVariety}
                                         onChange={e => setEditFormData({ ...editFormData, cherryVariety: e.target.value })}
                                         required
-                                        className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        className="block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                                     />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -382,7 +392,7 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
                                             required
                                             min="0"
                                             step="0.01"
-                                            className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            className="block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                                         />
                                     </div>
                                     <div>
@@ -393,7 +403,7 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
                                             value={editFormData.harvestDate}
                                             onChange={e => setEditFormData({ ...editFormData, harvestDate: e.target.value })}
                                             required
-                                            className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            className="block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                                         />
                                     </div>
                                 </div>
@@ -405,7 +415,7 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
                                         value={editFormData.farmPlotLocation}
                                         onChange={e => setEditFormData({ ...editFormData, farmPlotLocation: e.target.value })}
                                         required
-                                        className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        className="block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                                     />
                                 </div>
                                 <div>
@@ -415,7 +425,7 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
                                         value={editFormData.status}
                                         onChange={e => setEditFormData({ ...editFormData, status: e.target.value })}
                                         required
-                                        className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                        className="block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                                     >
                                         <option value="Ready for Processing">Ready for Processing</option>
                                         <option value="Processing">Processing</option>
@@ -426,7 +436,7 @@ const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
                                 <button
                                     type="button"
                                     onClick={closeEditModal}
-                                    className="bg-white py-2.5 px-5 border-2 border-gray-300 rounded-lg shadow-sm text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                                    className="bg-white py-2.5 px-5 border border-gray-300 rounded-lg shadow-sm text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                                 >
                                     Cancel
                                 </button>
