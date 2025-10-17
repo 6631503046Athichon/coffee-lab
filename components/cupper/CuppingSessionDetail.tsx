@@ -26,11 +26,11 @@ const ScoreTable: React.FC<{ session: CuppingSession, sampleId: string }> = ({ s
     return (
         <div className="overflow-x-auto mt-4">
             <table className="min-w-full border-collapse border border-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-900">
                     <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase border border-gray-200">Judge</th>
-                        {SCA_ATTRIBUTES.map(attr => <th key={attr} className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase border border-gray-200" title={attr}>{attr.split('/')[0]}</th>)}
-                        <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase border border-gray-200">Total</th>
+                        <th className="px-3 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border border-gray-200">Judge</th>
+                        {SCA_ATTRIBUTES.map(attr => <th key={attr} className="px-2 py-4 text-center text-xs font-bold text-white uppercase tracking-wider border border-gray-200" title={attr}>{attr.split('/')[0]}</th>)}
+                        <th className="px-3 py-4 text-center text-xs font-bold text-white uppercase tracking-wider border border-gray-200">Total</th>
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">

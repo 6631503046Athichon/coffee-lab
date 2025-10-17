@@ -61,18 +61,29 @@ const ProtectedRoutes: React.FC = () => {
     }
 
     return [
+      // Main Dashboard
       { name: 'Dashboard', href: '/dashboard', icon: BarChart, roles: [UserRole.Farmer, UserRole.Processor, UserRole.Roaster, UserRole.Admin, UserRole.HeadJudge] },
+
+      // Farmer Section
+      { name: 'Farmer Dashboard', href: '/farmer-dashboard', icon: Coffee, roles: [UserRole.Farmer, UserRole.Admin] },
+      { name: 'Data Hub', href: '/farmer-data-hub', icon: Database, roles: [UserRole.Farmer, UserRole.Admin] },
+      { name: 'GAP Helper', href: '/gap-compliance', icon: ClipboardCheck, roles: [UserRole.Farmer, UserRole.Admin] },
+
+      // Processor Section
       { name: 'Processor Workbench', href: '/processor', icon: Droplets, roles: [UserRole.Processor, UserRole.Admin] },
-      { name: 'Roaster Workbench', href: '/roaster', icon: Flame, roles: [UserRole.Roaster, UserRole.Admin] },
+
+      // Quality & Cupping Section
       { name: 'Cupping Lab', href: '/cupping', icon: FlaskConical, roles: [UserRole.Processor, UserRole.Roaster, UserRole.HeadJudge, UserRole.Admin] },
-      { name: 'Scoring Sheet', href: '/scoring', icon: Edit, roles: [UserRole.Cupper] },
-      { name: 'Traceability Hub', href: '/traceability', icon: Search, roles: [UserRole.Admin, UserRole.Processor] },
+      { name: 'Scoring Sheet', href: '/scoring', icon: Edit, roles: [UserRole.Cupper, UserRole.Admin] },
+      { name: 'Competition Admin', href: competitionAdminHref, icon: Trophy, roles: [UserRole.HeadJudge, UserRole.Cupper, UserRole.Admin] },
       { name: 'Quality Insights', href: '/insights', icon: Lightbulb, roles: [UserRole.Roaster, UserRole.Processor, UserRole.Admin] },
-      { name: 'Competition Admin', href: competitionAdminHref, icon: Trophy, roles: [UserRole.HeadJudge, UserRole.Cupper] },
+
+      // Roaster Section
+      { name: 'Roaster Workbench', href: '/roaster', icon: Flame, roles: [UserRole.Roaster, UserRole.Admin] },
+
+      // Traceability & Admin
+      { name: 'Traceability Hub', href: '/traceability', icon: Search, roles: [UserRole.Admin, UserRole.Processor] },
       { name: 'User Management', href: '/users', icon: Users, roles: [UserRole.Admin] },
-      { name: 'Farmer Dashboard', href: '/farmer-dashboard', icon: Coffee, roles: [UserRole.Farmer] },
-      { name: 'Data Hub', href: '/farmer-data-hub', icon: Database, roles: [UserRole.Farmer] },
-      { name: 'GAP Helper', href: '/gap-compliance', icon: ClipboardCheck, roles: [UserRole.Farmer] },
     ];
   }, [currentUser, data.cuppingSessions]);
 
@@ -90,19 +101,18 @@ const ProtectedRoutes: React.FC = () => {
             <Routes>
               <Route path="/" element={<Navigate to="/dashboard" />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/processor" element={<ProcessorWorkbench />} />
+              <Route path="/processor" element={<ProcessorWorkbench currentUser={currentUser!} />} />
               <Route path="/roaster" element={<RoasterWorkbench currentUser={currentUser!} />} />
               <Route path="/cupping" element={<CuppingHub />} />
               <Route path="/cupping/:id" element={<CuppingSessionDetail currentUser={currentUser!} />} />
               <Route path="/scoring" element={<CupperScoringSheet currentUser={currentUser!} />} />
               <Route path="/insights" element={<QualityInsights />} />
               <Route path="/competition/:id" element={<CompetitionDashboard currentUserRole={currentUser?.role || UserRole.Farmer} />} />
-              <Route path="/traceability/:lotId" element={<TraceabilityPage />} />
               <Route path="/traceability" element={<TraceabilityHub />} />
               <Route path="/users" element={<UserManagement />} />
               <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
               <Route path="/farmer-dashboard/:lotId" element={<HarvestLotDetail />} />
-              <Route path="/farmer-data-hub" element={<FarmerDataHub />} />
+              <Route path="/farmer-data-hub" element={<FarmerDataHub currentUser={currentUser!} />} />
               <Route path="/gap-compliance" element={<GAPComplianceHelper />} />
             </Routes>
           </main>
@@ -113,10 +123,22 @@ const ProtectedRoutes: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const [data] = useState(MOCK_DATA);
+  const contextValue = useMemo(() => ({ data, setData: () => {} }), [data]);
+
   return (
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<Login />} />
+        {/* Public Route - ไม่ต้องล็อกอิน */}
+        <Route
+          path="/traceability/:lotId"
+          element={
+            <DataContext.Provider value={contextValue}>
+              <TraceabilityPage />
+            </DataContext.Provider>
+          }
+        />
         <Route path="/*" element={<ProtectedRoutes />} />
       </Routes>
     </AuthProvider>

@@ -349,14 +349,14 @@ const GAPComplianceHelper: React.FC = () => {
 
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-gray-900">
                                 <tr>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Plot</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Date</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Product/Method</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Quantity</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Notes</th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Plot</th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Date</th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Type</th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Product/Method</th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Quantity</th>
+                                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Notes</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-100">
@@ -447,11 +447,11 @@ const GAPComplianceHelper: React.FC = () => {
                                                 </div>
                                                 <div className="overflow-x-auto">
                                                     <table className="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
-                                                        <thead className="bg-gray-50">
+                                                        <thead className="bg-gray-900">
                                                             <tr>
-                                                                <th className="text-left px-4 py-2 font-semibold text-gray-700 w-1/4 border-b border-gray-200">Date</th>
-                                                                <th className="text-left px-4 py-2 font-semibold text-gray-700 w-1/2 border-b border-gray-200">Product/Method</th>
-                                                                <th className="text-left px-4 py-2 font-semibold text-gray-700 w-1/4 border-b border-gray-200">Quantity</th>
+                                                                <th className="text-left px-4 py-4 font-bold text-white w-1/4 border-b border-gray-200 tracking-wider">Date</th>
+                                                                <th className="text-left px-4 py-4 font-bold text-white w-1/2 border-b border-gray-200 tracking-wider">Product/Method</th>
+                                                                <th className="text-left px-4 py-4 font-bold text-white w-1/4 border-b border-gray-200 tracking-wider">Quantity</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody className="bg-white">

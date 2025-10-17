@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDataContext } from '../hooks/useDataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types';
@@ -35,6 +36,7 @@ const StatCard: React.FC<{
 const Dashboard: React.FC = () => {
   const { data } = useDataContext();
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
 
   // Filter data based on user role
   const isAdmin = currentUser?.role === UserRole.Admin;
@@ -178,28 +180,40 @@ const Dashboard: React.FC = () => {
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {(isAdmin || isFarmer) && (
-            <button className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-amber-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg">
+            <button
+              onClick={() => navigate('/farmer')}
+              className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-amber-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
+            >
               <Coffee className="h-8 w-8 text-amber-600 mb-3" />
               <h3 className="font-bold text-gray-800 mb-1">New Harvest</h3>
               <p className="text-sm text-gray-600">Record a new harvest lot</p>
             </button>
           )}
           {(isAdmin || isProcessor) && (
-            <button className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-blue-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg">
+            <button
+              onClick={() => navigate('/processor')}
+              className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-blue-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
+            >
               <Droplets className="h-8 w-8 text-blue-600 mb-3" />
               <h3 className="font-bold text-gray-800 mb-1">Start Processing</h3>
               <p className="text-sm text-gray-600">Begin new processing batch</p>
             </button>
           )}
           {(isAdmin || isCupper) && (
-            <button className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-purple-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg">
+            <button
+              onClick={() => navigate('/cupping')}
+              className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-purple-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
+            >
               <FlaskConical className="h-8 w-8 text-purple-600 mb-3" />
               <h3 className="font-bold text-gray-800 mb-1">New Session</h3>
               <p className="text-sm text-gray-600">Create cupping session</p>
             </button>
           )}
           {isAdmin && (
-            <button className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-green-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg">
+            <button
+              onClick={() => navigate('/quality-insights')}
+              className="bg-white hover:bg-gray-50 border-2 border-gray-200 hover:border-green-400 rounded-xl p-6 text-left transition-all shadow-md hover:shadow-lg"
+            >
               <Award className="h-8 w-8 text-green-600 mb-3" />
               <h3 className="font-bold text-gray-800 mb-1">View Reports</h3>
               <p className="text-sm text-gray-600">Quality insights & analytics</p>

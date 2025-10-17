@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDataContext } from '../../hooks/useDataContext';
-import { HarvestLot } from '../../types';
-import { Download, Filter, ChevronRight, Database, ChevronDown, Check } from 'lucide-react';
+import { HarvestLot, User, UserRole } from '../../types';
+import { Download, Filter, ChevronRight, Database, ChevronDown, Check, Edit, Trash2 } from 'lucide-react';
 
 // Custom Dropdown Component
 const CustomFilterDropdown: React.FC<{
@@ -62,8 +63,13 @@ const CustomFilterDropdown: React.FC<{
   );
 };
 
-const FarmerDataHub: React.FC = () => {
-    const { data } = useDataContext();
+interface FarmerDataHubProps {
+    currentUser: User;
+}
+
+const FarmerDataHub: React.FC<FarmerDataHubProps> = ({ currentUser }) => {
+    const { data, setData } = useDataContext();
+    const navigate = useNavigate();
     const [yearFilter, setYearFilter] = useState<string>('All');
     const [plotFilter, setPlotFilter] = useState<string>('All');
 
@@ -87,6 +93,21 @@ const FarmerDataHub: React.FC = () => {
         });
     }, [data.harvestLots, yearFilter, plotFilter]);
 
+    const handleDelete = (lotId: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent row click
+        if (window.confirm('Are you sure you want to delete this harvest lot? This action cannot be undone.')) {
+            setData(prev => ({
+                ...prev,
+                harvestLots: prev.harvestLots.filter(lot => lot.id !== lotId),
+            }));
+        }
+    };
+
+    const handleEdit = (lotId: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent row click
+        navigate(`/farmer-dashboard/${lotId}`);
+    };
+
     const exportToCSV = () => {
         if (filteredLots.length === 0) {
             alert("No data to export.");
@@ -106,7 +127,7 @@ const FarmerDataHub: React.FC = () => {
                 lot.status
             ].join(','))
         ];
-        
+
         const csvString = csvRows.join('\n');
         const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -118,6 +139,8 @@ const FarmerDataHub: React.FC = () => {
         link.click();
         document.body.removeChild(link);
     };
+
+    const isAdmin = currentUser.role === UserRole.Admin;
 
     return (
         <div className="space-y-6">
@@ -177,7 +200,7 @@ const FarmerDataHub: React.FC = () => {
                                 <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Harvest Date</th>
                                 <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Status</th>
                                 <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">
-                                    <span className="sr-only">View</span>
+                                    {isAdmin ? 'Actions' : <span className="sr-only">View</span>}
                                 </th>
                             </tr>
                         </thead>
@@ -192,7 +215,11 @@ const FarmerDataHub: React.FC = () => {
                                 </tr>
                             ) : (
                                 filteredLots.map((lot: HarvestLot) => (
-                                    <tr key={lot.id} className="hover:bg-gray-50 transition-colors">
+                                    <tr
+                                        key={lot.id}
+                                        onClick={() => navigate(`/farmer-dashboard/${lot.id}`)}
+                                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                    >
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                                             {lot.id}
                                         </td>
@@ -218,9 +245,30 @@ const FarmerDataHub: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                            <button className="text-indigo-600 hover:text-indigo-900 font-medium">
-                                                View
-                                            </button>
+                                            {isAdmin ? (
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button
+                                                        onClick={(e) => handleEdit(lot.id, e)}
+                                                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded-md hover:bg-indigo-50 transition-colors"
+                                                        title="Edit"
+                                                    >
+                                                        <Edit className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDelete(lot.id, e)}
+                                                        className="text-red-600 hover:text-red-900 p-1 rounded-md hover:bg-red-50 transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    className="text-indigo-600 hover:text-indigo-900 font-semibold hover:underline transition-colors"
+                                                >
+                                                    View
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
