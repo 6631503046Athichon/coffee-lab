@@ -1,11 +1,75 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useDataContext } from '../hooks/useDataContext';
 import { SCA_ATTRIBUTES, CuppingSession, ComprehensiveQualityReport } from '../types';
 import { getQualityInsights, QualityInsight, generateComprehensiveReport } from '../services/geminiService';
-import { Lightbulb, Loader2, AlertTriangle, Wand2, BarChart2, CheckSquare, Wind, Bot, TrendingUp, Trophy, FileText, User, Droplets, Flame } from 'lucide-react';
+import { Lightbulb, Loader2, AlertTriangle, Wand2, BarChart2, CheckSquare, Wind, Bot, TrendingUp, Trophy, FileText, User, Droplets, Flame, ChevronDown, Check } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+// Custom Dropdown Component
+const CustomDropdown: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  className?: string;
+}> = ({ value, onChange, options, placeholder = "Select...", className = "" }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => opt.value === value);
+
+  return (
+    <div ref={dropdownRef} className={`relative ${className}`}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all hover:border-gray-400 flex items-center justify-between gap-2 shadow-sm"
+      >
+        <span className={selectedOption ? "text-gray-900" : "text-gray-500"}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-20 mt-2 left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-xl overflow-hidden max-h-60 overflow-y-auto">
+          <div className="py-1">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-4 py-3 transition-all text-sm font-medium hover:bg-indigo-50 hover:text-indigo-700 flex items-center justify-between ${
+                  value === option.value ? 'bg-indigo-50 text-indigo-700' : 'text-gray-900'
+                }`}
+              >
+                <span>{option.label}</span>
+                {value === option.value && (
+                  <Check className="h-5 w-5 text-indigo-600" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const QualityInsights: React.FC = () => {
     const { data } = useDataContext();
@@ -83,10 +147,14 @@ const QualityInsights: React.FC = () => {
             entry.count += 1;
             return acc;
         }, {});
-        
-        return Object.entries(scoresByProcess).map(([name, { totalScore, count }]) => ({
-            name, 'Average Score': parseFloat((totalScore / count).toFixed(2)),
-        }));
+
+        return Object.entries(scoresByProcess).map(([name, data]) => {
+            const { totalScore, count } = data as { totalScore: number; count: number };
+            return {
+                name,
+                'Average Score': parseFloat((totalScore / count).toFixed(2)),
+            };
+        });
     }, [data]);
 
     const farmPerformanceData = useMemo(() => {
@@ -232,9 +300,14 @@ const QualityInsights: React.FC = () => {
                         <div className="h-80"><ResponsiveContainer width="100%" height="100%"><BarChart data={processComparisonData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis domain={[80, 'dataMax + 1']} /><Tooltip /><Legend /><Bar dataKey="Average Score" fill="#4f46e5" /></BarChart></ResponsiveContainer></div>
                     </div>
                     <div>
-                        <div className="flex justify-between items-center mb-2">
-                             <h3 className="font-semibold text-center text-gray-700">Farm Performance Over Time</h3>
-                             <select value={selectedFarmName} onChange={e => setSelectedFarmName(e.target.value)} className="text-sm border-gray-300 rounded-md shadow-sm">{farmerNames.map(name => <option key={name} value={name}>{name}</option>)}</select>
+                        <div className="flex justify-between items-center mb-2 gap-4">
+                             <h3 className="font-semibold text-gray-700">Farm Performance Over Time</h3>
+                             <CustomDropdown
+                                value={selectedFarmName}
+                                onChange={setSelectedFarmName}
+                                options={farmerNames.map(name => ({ value: name, label: name }))}
+                                className="w-48"
+                             />
                         </div>
                         <div className="h-80"><ResponsiveContainer width="100%" height="100%"><LineChart data={farmPerformanceData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis domain={[80, 'dataMax + 1']} /><Tooltip /><Legend /><Line type="monotone" dataKey="Score" stroke="#10b981" strokeWidth={2} activeDot={{ r: 8 }} /></LineChart></ResponsiveContainer></div>
                     </div>
@@ -246,19 +319,24 @@ const QualityInsights: React.FC = () => {
                 <h2 className="text-xl font-bold text-gray-800 mb-4">AI-Powered Cupping Analysis</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     <div>
-                        <label htmlFor="session" className="block text-sm font-medium text-gray-700">Cupping Session</label>
-                        <select id="session" value={selectedSessionId} onChange={e => setSelectedSessionId(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            <option value="" disabled>Select a session...</option>
-                            {data.cuppingSessions.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
-                        </select>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Cupping Session</label>
+                        <CustomDropdown
+                            value={selectedSessionId}
+                            onChange={setSelectedSessionId}
+                            options={data.cuppingSessions.map(s => ({ value: s.id, label: s.name }))}
+                            placeholder="Select a session..."
+                        />
                     </div>
                     <div>
-                        <label htmlFor="attribute" className="block text-sm font-medium text-gray-700">Quality Attribute</label>
-                        <select id="attribute" value={selectedAttribute} onChange={e => setSelectedAttribute(e.target.value)} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            {SCA_ATTRIBUTES.map(attr => (<option key={attr} value={attr}>{attr}</option>))}
-                        </select>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Quality Attribute</label>
+                        <CustomDropdown
+                            value={selectedAttribute}
+                            onChange={setSelectedAttribute}
+                            options={SCA_ATTRIBUTES.map(attr => ({ value: attr, label: attr }))}
+                            placeholder="Select attribute..."
+                        />
                     </div>
-                    <button onClick={handleGenerateCuppingInsights} disabled={!selectedSessionId || isLoading} className="w-full md:w-auto inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 disabled:bg-indigo-300">
+                    <button onClick={handleGenerateCuppingInsights} disabled={!selectedSessionId || isLoading} className="w-full md:w-auto inline-flex items-center justify-center rounded-lg border border-transparent bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:bg-indigo-300 transition-all">
                         {isLoading ? <Loader2 className="h-5 w-5 mr-2 animate-spin" /> : <Lightbulb className="h-5 w-5 mr-2" />}
                         {isLoading ? 'Analyzing...' : 'Generate Insights'}
                     </button>
@@ -285,12 +363,14 @@ const QualityInsights: React.FC = () => {
             {/* --- Drying Curve Analysis Section --- */}
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center"><Wind className="mr-2 text-blue-500"/> Drying Curve Analysis</h2>
-                <div>
-                    <label htmlFor="parchmentLot" className="block text-sm font-medium text-gray-700">Select Parchment Lot for Analysis</label>
-                    <select id="parchmentLot" value={selectedParchmentLotId} onChange={e => setSelectedParchmentLotId(e.target.value)} className="mt-1 block w-full max-w-xs border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="" disabled>Select a lot...</option>
-                        {lotsForDryingAnalysis.map(lot => (<option key={lot.id} value={lot.id}>{lot.id} ({lot.processType})</option>))}
-                    </select>
+                <div className="max-w-xs">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Parchment Lot for Analysis</label>
+                    <CustomDropdown
+                        value={selectedParchmentLotId}
+                        onChange={setSelectedParchmentLotId}
+                        options={lotsForDryingAnalysis.map(lot => ({ value: lot.id, label: `${lot.id} (${lot.processType})` }))}
+                        placeholder="Select a lot..."
+                    />
                 </div>
                 <div className="mt-6 h-96">
                     {!selectedParchmentLotId ? <div className="flex items-center justify-center h-full bg-gray-50 rounded-md"><p className="text-gray-500">Please select a parchment lot to view its drying curve.</p></div>

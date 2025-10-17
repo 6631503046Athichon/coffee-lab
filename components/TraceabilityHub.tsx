@@ -45,13 +45,17 @@ const TraceabilityHub: React.FC = () => {
     }, [enrichedLots, searchTerm]);
 
     return (
-        <div>
-            <h1 className="text-3xl font-bold text-gray-900">Traceability Curation Hub</h1>
-            <p className="text-gray-600 mt-1 mb-6">Manage and view public traceability pages for green bean lots.</p>
+        <div className="space-y-6">
+            {/* Header Section */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <h1 className="text-3xl font-bold text-gray-900">Traceability Curation Hub</h1>
+                <p className="text-gray-600 mt-2">Manage and view public traceability pages for green bean lots.</p>
+            </div>
 
-            <div className="mb-6">
+            {/* Search Bar */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
                 <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Search className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
@@ -59,47 +63,62 @@ const TraceabilityHub: React.FC = () => {
                         placeholder="Search by Lot ID, variety, process, or grade..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all"
                     />
                 </div>
             </div>
 
-            <div className="bg-white shadow-md rounded-lg overflow-hidden">
+            {/* Table */}
+            <div className="bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lot ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Variety</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Process</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Final Score</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                    <table className="min-w-full">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200">
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Lot ID</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Variety</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Process</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Grade</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Final Score</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-white divide-y divide-gray-100">
                             {filteredLots.map(lot => (
-                                <tr key={lot.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{lot.id}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lot.variety}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lot.processType}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{lot.grade}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-600">{lot.finalScore}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lot.availabilityStatus === 'Available' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                            {lot.availabilityStatus === 'Available' ? <CheckCircle className="h-3 w-3 mr-1" /> : <Archive className="h-3 w-3 mr-1" />}
+                                <tr key={lot.id} className="hover:bg-gray-50 transition-colors duration-200">
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className="text-sm font-bold text-gray-900">{lot.id}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className="text-sm text-gray-700">{lot.variety}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className="text-sm font-medium text-gray-900">{lot.processType}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className="text-sm text-gray-700">{lot.grade}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className="text-sm font-bold text-indigo-600">{lot.finalScore}</span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${
+                                            lot.availabilityStatus === 'Available'
+                                                ? 'bg-green-100 text-green-700 border-green-200'
+                                                : 'bg-gray-100 text-gray-700 border-gray-200'
+                                        }`}>
+                                            {lot.availabilityStatus === 'Available' ? <CheckCircle className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
                                             {lot.availabilityStatus}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                        <Link 
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <Link
                                             to={`/traceability/${lot.id}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center text-indigo-600 hover:text-indigo-900 font-semibold"
+                                            className="inline-flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 font-bold text-sm transition-colors duration-200 hover:underline"
                                         >
-                                            View Page <ExternalLink className="h-4 w-4 ml-1.5" />
+                                            View Page <ExternalLink className="h-4 w-4" />
                                         </Link>
                                     </td>
                                 </tr>
@@ -107,8 +126,9 @@ const TraceabilityHub: React.FC = () => {
                         </tbody>
                     </table>
                      {filteredLots.length === 0 && (
-                        <div className="text-center p-8 text-gray-500">
-                            No lots match your search criteria.
+                        <div className="text-center p-12 text-gray-500">
+                            <Search className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                            <p className="text-sm font-medium">No lots match your search criteria.</p>
                         </div>
                     )}
                 </div>

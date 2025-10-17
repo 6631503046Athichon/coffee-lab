@@ -80,12 +80,12 @@ const UserManagement: React.FC = () => {
             <div className="bg-white shadow-md rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-gray-900">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User ID</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">User</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Role</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">User ID</th>
+                                <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">

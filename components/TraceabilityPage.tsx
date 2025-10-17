@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import { useDataContext } from '../hooks/useDataContext';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import { SCA_ATTRIBUTES, User, CuppingSession } from '../types';
-import { Thermometer, Droplets, QrCode, Printer, Flame, Copy, Check } from 'lucide-react';
+import { Coffee, Thermometer, Droplets, QrCode, Printer, Flame, Copy, Check } from 'lucide-react';
 
 const FlavorProfileChart: React.FC<{ data: any[] }> = ({ data }) => (
     <ResponsiveContainer width="100%" height={300}>
@@ -32,11 +32,27 @@ const TraceabilityPage: React.FC = () => {
     
     const scoreInfo = greenBeanLot.cuppingScores[0];
     let cuppingResult: CuppingSession['finalResults'][string] | undefined;
+    let cuppingScore: number | undefined;
+    let cuppingNotes: string = '';
+    
     if (scoreInfo) {
         const session = data.cuppingSessions.find(s => s.id === scoreInfo.sessionId);
         const sample = session?.samples.find(s => s.greenBeanLotId === greenBeanLot.id);
         if (session && sample && session.finalResults && session.finalResults[sample.id]) {
             cuppingResult = session.finalResults[sample.id];
+            cuppingScore = cuppingResult.totalScore;
+            cuppingNotes = cuppingResult.finalNotes;
+        } else if (session && sample && session.scores[sample.id]) {
+            // Fallback to individual scores if finalResults not available
+            const scores = session.scores[sample.id];
+            if (scores && scores.length > 0) {
+                cuppingScore = scores[0].totalScore;
+                cuppingNotes = scores[0].notes;
+            }
+        }
+        // Final fallback to score on greenBeanLot
+        if (!cuppingScore && scoreInfo.score) {
+            cuppingScore = scoreInfo.score;
         }
     }
     
@@ -104,50 +120,100 @@ const TraceabilityPage: React.FC = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden my-8">
-            {/* Section 1: Introduction */}
-            <div>
-                <img src="https://picsum.photos/1200/600?image=1060" alt="Coffee Farm" className="w-full h-64 object-cover" />
-                <div className="p-6 md:p-8">
-                    <h1 className="text-4xl font-extrabold text-gray-800 tracking-tight">{harvestLot?.cherryVariety || 'Specialty Coffee'} Lot {lotId}</h1>
-                    <p className="mt-2 text-indigo-600 font-semibold">{harvestLot?.farmPlotLocation}</p>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                        {flavorNotes.map(note => (
-                            <span key={note} className="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full">{note}</span>
-                        ))}
+        <div className="min-h-screen bg-gray-50">
+            <div className="max-w-5xl mx-auto bg-white shadow-xl rounded-3xl overflow-hidden my-8">
+                {/* Section 1: Introduction with Hero Image */}
+                <div className="relative">
+                    {/* Hero Image with Overlay Gradient */}
+                    <div className="relative h-72 overflow-hidden">
+                        <img
+                            src="https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=1200&h=600&fit=crop"
+                            alt="Coffee Farm"
+                            className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+
+                        {/* Lot ID Badge on Image */}
+                        <div className="absolute top-8 right-8 bg-white/95 backdrop-blur-sm px-5 py-2.5 rounded-full shadow-lg">
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Lot</p>
+                            <p className="text-xl font-extrabold text-indigo-600">{lotId}</p>
+                        </div>
+
+                        {/* Title Overlay */}
+                        <div className="absolute bottom-0 left-0 right-0 px-8 pb-6 text-white">
+                            <h1 className="text-4xl md:text-5xl font-black tracking-tight drop-shadow-lg">
+                                {harvestLot?.cherryVariety || 'Specialty Coffee'}
+                            </h1>
+                            <p className="mt-2 text-lg font-medium text-gray-200 drop-shadow-md flex items-center gap-2">
+                                <Coffee className="h-5 w-5" />
+                                {harvestLot?.farmPlotLocation}
+                            </p>
+                        </div>
                     </div>
-                    <p className="mt-6 text-gray-600 leading-relaxed">
-                        This exceptional lot comes from {harvestLot?.farmerName}, a dedicated producer whose commitment to quality shines through in every cup. Grown in the rich volcanic soils of {harvestLot?.farmPlotLocation}, these {harvestLot?.cherryVariety} beans were carefully hand-picked and processed with meticulous attention to detail, resulting in a truly remarkable flavor experience.
-                    </p>
+
+                {/* Content Section */}
+                <div className="px-8 md:px-12 py-8">
+                    {/* Flavor Notes Tags */}
+                    {flavorNotes.length > 0 && (
+                        <div className="mb-8">
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Tasting Notes</p>
+                            <div className="flex flex-wrap gap-2">
+                                {flavorNotes.map(note => (
+                                    <span
+                                        key={note}
+                                        className="px-4 py-2 bg-amber-100 text-amber-800 text-sm font-semibold rounded-full border border-amber-200"
+                                    >
+                                        {note}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Story Section */}
+                    <div className="bg-indigo-50 rounded-2xl p-6 border-l-4 border-indigo-500">
+                        <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            <Coffee className="h-5 w-5 text-indigo-600" />
+                            Origin Story
+                        </h2>
+                        <p className="text-gray-700 leading-relaxed text-sm">
+                            This exceptional lot comes from <span className="font-bold text-indigo-700">{harvestLot?.farmerName}</span>, a dedicated producer whose commitment to quality shines through in every cup. Grown in the rich volcanic soils of <span className="font-semibold">{harvestLot?.farmPlotLocation}</span>, these {harvestLot?.cherryVariety} beans were carefully hand-picked and processed with meticulous attention to detail, resulting in a truly remarkable flavor experience.
+                        </p>
+                    </div>
                 </div>
             </div>
 
             {/* Section 2: QR Code Share */}
-            <div className="bg-indigo-50 p-6 md:p-8 border-t border-b border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center flex items-center justify-center gap-2"><QrCode /> Share This Coffee's Story</h2>
-                <div className="flex flex-col md:flex-row items-center justify-center gap-8">
-                    <div id="qr-code-container">
+            <div className="bg-gray-50 px-8 md:px-12 py-10 border-t border-gray-200">
+                <div className="text-center mb-6">
+                    <div className="inline-flex items-center gap-2 mb-2">
+                        <QrCode className="h-6 w-6 text-gray-700" />
+                        <h2 className="text-2xl font-bold text-gray-900">Share This Coffee's Story</h2>
+                    </div>
+                </div>
+                <div className="flex flex-col md:flex-row items-center justify-center gap-10 max-w-4xl mx-auto">
+                    <div id="qr-code-container" className="flex-shrink-0">
                         <img 
                             src={qrCodeUrl}
                             alt={`QR Code for Lot ${lotId}`}
-                            className="rounded-lg shadow-md border-4 border-white"
+                            className="rounded-xl shadow-lg border-4 border-white w-48 h-48"
                         />
                     </div>
-                    <div>
-                        <p className="text-gray-700 max-w-sm">
+                    <div className="flex-1">
+                        <p className="text-gray-600 text-sm leading-relaxed mb-5">
                             Roasters, add this QR code to your packaging to connect your customers directly to the farm-to-cup journey of this coffee. A simple scan with a smartphone camera will open this traceability page.
                         </p>
-                        <div className="mt-4 flex flex-col sm:flex-row items-center gap-3">
+                        <div className="flex flex-col sm:flex-row items-stretch gap-3">
                             <button
                                 onClick={handlePrint}
-                                className="w-full sm:w-auto inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
+                                className="flex-1 inline-flex items-center justify-center rounded-lg border border-transparent bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors"
                             >
                                 <Printer className="h-4 w-4 mr-2" />
                                 Print QR Code
                             </button>
                             <button
                                 onClick={handleCopyLink}
-                                className="w-full sm:w-auto inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                                className="flex-1 inline-flex items-center justify-center rounded-lg border-2 border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
                             >
                                 {isLinkCopied ? (
                                     <>
@@ -166,46 +232,146 @@ const TraceabilityPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-gray-50 p-6 md:p-8 border-t border-b border-gray-200">
-                {/* Section 3: Journey */}
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">The Journey from the Farm</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                    <div className="bg-white p-4 rounded-lg border">
-                        <h3 className="font-bold text-gray-900">Origin Details</h3>
-                        <p><strong>Producer:</strong> {harvestLot?.farmerName}</p>
-                        <p><strong>Variety:</strong> {harvestLot?.cherryVariety}</p>
-                        <p><strong>Harvest Date:</strong> {harvestLot?.harvestDate}</p>
+            {/* Section 3: Journey from Farm */}
+            <div className="bg-white px-8 md:px-12 py-10">
+                <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">The Journey from the Farm</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                    {/* Origin Details Card */}
+                    <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200">
+                        <div className="bg-green-600 px-5 py-3">
+                            <h3 className="font-bold text-white text-base flex items-center gap-2">
+                                <Coffee className="h-4 w-4" />
+                                Origin Details
+                            </h3>
+                        </div>
+                        <div className="p-5 space-y-4">
+                            <div>
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Producer</p>
+                                <p className="text-base font-bold text-gray-900">{harvestLot?.farmerName}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Variety</p>
+                                <p className="text-base font-bold text-gray-900">{harvestLot?.cherryVariety}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Harvest Date</p>
+                                <p className="text-base font-bold text-gray-900">{harvestLot?.harvestDate}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="bg-white p-4 rounded-lg border">
-                        <h3 className="font-bold text-gray-900">Processing Details</h3>
-                        <p><strong>Method:</strong> {processingBatch?.processType}</p>
-                        <p><strong>Drying Duration:</strong> {dryingDuration}</p>
-                        <p className="flex items-center gap-4 mt-2">
-                            <span className="flex items-center" title="Avg Temp"><Thermometer size={16} className="text-red-500 mr-1"/> {avgTemp}</span>
-                            <span className="flex items-center" title="Avg Humidity"><Droplets size={16} className="text-blue-500 mr-1"/> {avgHumidity}</span>
-                        </p>
+
+                    {/* Processing Details Card */}
+                    <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200">
+                        <div className="bg-blue-600 px-5 py-3">
+                            <h3 className="font-bold text-white text-base flex items-center gap-2">
+                                <Droplets className="h-4 w-4" />
+                                Processing Details
+                            </h3>
+                        </div>
+                        <div className="p-5 space-y-4">
+                            <div>
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Method</p>
+                                <p className="text-base font-bold text-gray-900">{processingBatch?.processType}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Drying Duration</p>
+                                <p className="text-base font-bold text-gray-900">{dryingDuration}</p>
+                            </div>
+                            <div className="flex items-center gap-4 pt-2">
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-lg border border-red-100">
+                                    <Thermometer className="h-4 w-4 text-red-500" />
+                                    <span className="font-bold text-gray-900 text-sm">{avgTemp}</span>
+                                </div>
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-100">
+                                    <Droplets className="h-4 w-4 text-blue-500" />
+                                    <span className="font-bold text-gray-900 text-sm">{avgHumidity}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Section 4: Quality */}
-            <div className="p-6 md:p-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Quality in the Cup</h2>
-                <div className="flex flex-col md:flex-row items-center gap-8">
-                    <div className="w-full md:w-1/2">
-                        <h3 className="font-bold text-gray-900 text-lg mb-2">Flavor Profile</h3>
-                        <FlavorProfileChart data={chartData} />
-                    </div>
-                    <div className="w-full md:w-1/2">
-                         <div className="text-center mb-6">
-                            <p className="text-sm text-gray-500 uppercase">Final Cupping Score</p>
-                            <p className="text-7xl font-extrabold text-indigo-600">{cuppingResult?.totalScore.toFixed(2)}</p>
-                            <p className="mt-1 font-semibold text-green-700 bg-green-100 rounded-full px-4 py-1 inline-block">Specialty Grade</p>
+            {/* Section 4: Quality in the Cup */}
+            <div className="bg-gray-50 px-8 md:px-12 py-10 border-t border-gray-200">
+                <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Quality in the Cup</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                    {/* Flavor Profile */}
+                    {chartData.length > 0 ? (
+                        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                            <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
+                                Flavor Profile
+                            </h3>
+                            <FlavorProfileChart data={chartData} />
                         </div>
-                        <div>
-                            <h3 className="font-bold text-gray-900 text-lg mb-2">Cupper's Final Notes</h3>
-                            <div className="bg-indigo-50 p-4 rounded-lg">
-                                <p className="text-gray-700 italic">"{cuppingResult?.finalNotes}"</p>
+                    ) : (
+                        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                            <h3 className="font-bold text-gray-900 text-base mb-4 flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
+                                Processing Information
+                            </h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                                    <span className="text-sm text-gray-600">Process Type</span>
+                                    <span className="text-sm font-bold text-gray-900">{processingBatch?.processType || 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                                    <span className="text-sm text-gray-600">Variety</span>
+                                    <span className="text-sm font-bold text-gray-900">{harvestLot?.cherryVariety || 'N/A'}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-gray-600">Origin</span>
+                                    <span className="text-sm font-bold text-gray-900">{harvestLot?.farmPlotLocation || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Score & Notes */}
+                    <div className="space-y-6">
+                        {/* Score Card */}
+                        {cuppingScore && (
+                            <div className="bg-indigo-600 rounded-xl p-6 text-center shadow-md">
+                                <p className="text-xs font-bold text-indigo-200 uppercase tracking-wider mb-2">Final Cupping Score</p>
+                                <p className="text-6xl font-black text-white mb-3">{cuppingScore.toFixed(2)}</p>
+                                {cuppingScore >= 80 && (
+                                    <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
+                                        <p className="font-semibold text-white text-sm">Specialty Grade</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Cupper's Notes */}
+                        {cuppingNotes && (
+                            <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
+                                <h3 className="font-bold text-gray-900 text-base mb-3 flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-purple-600"></div>
+                                    Cupper's Notes
+                                </h3>
+                                <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-500">
+                                    <p className="text-gray-700 italic leading-relaxed text-sm">"{cuppingNotes}"</p>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Grade Info */}
+                        <div className="bg-white rounded-xl p-5 shadow-md border border-gray-200">
+                            <h3 className="font-bold text-gray-900 text-base mb-3 flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-green-600"></div>
+                                Lot Information
+                            </h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                                    <span className="text-sm text-gray-600">Grade</span>
+                                    <span className="text-sm font-bold text-gray-900">{greenBeanLot.grade}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-gray-600">Available Stock</span>
+                                    <span className="text-sm font-bold text-gray-900">{greenBeanLot.currentWeightKg.toFixed(2)} kg</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -214,38 +380,74 @@ const TraceabilityPage: React.FC = () => {
             
             {/* Section 5: Roaster Details */}
             {roastBatches.length > 0 && roaster && (
-                <div className="bg-gray-50 p-6 md:p-8 border-t border-gray-200">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center flex items-center justify-center gap-2">
-                        <Flame className="text-orange-500" />
-                        Roasted By: <span className="text-indigo-600">{roaster.name}</span>
-                    </h2>
-                    <div className="max-w-2xl mx-auto space-y-4">
+                <div className="bg-white px-8 md:px-12 py-10 border-t border-gray-200">
+                    <div className="text-center mb-8">
+                        <div className="inline-flex items-center justify-center gap-2 bg-orange-600 text-white px-6 py-2.5 rounded-full shadow-md mb-3">
+                            <Flame className="h-5 w-5" />
+                            <h2 className="text-lg font-bold">Roasted By</h2>
+                        </div>
+                        <p className="text-3xl font-black text-orange-600">
+                            {roaster.name}
+                        </p>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto space-y-5">
                         {roastBatches.map(roast => (
-                            <div key={roast.id} className="bg-white p-4 rounded-lg border border-gray-200">
-                                <div className="flex justify-between items-center mb-2">
-                                    <h3 className="font-bold text-gray-900">Roast Details</h3>
-                                    <p className="text-sm text-gray-500">{roast.roastDate}</p>
-                                </div>
-                                <blockquote className="text-sm text-gray-700 italic border-l-4 border-gray-200 pl-4">
-                                    {roast.roastProfileNotes}
-                                </blockquote>
-                                {roast.flavorNotes && (
-                                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                                        <strong className="text-xs text-gray-900">Flavor Notes:</strong>
-                                        {roast.flavorNotes.split(',').map(note => note.trim()).filter(Boolean).map((note, index) => (
-                                            <span key={index} className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">{note}</span>
-                                        ))}
+                            <div key={roast.id} className="bg-gray-50 rounded-xl shadow-md overflow-hidden border border-gray-200">
+                                {/* Header */}
+                                <div className="bg-orange-100 px-5 py-3 border-b border-orange-200">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="font-bold text-gray-900 text-base flex items-center gap-2">
+                                            <Flame className="h-4 w-4 text-orange-600" />
+                                            Roast Profile
+                                        </h3>
+                                        <div className="bg-white px-3 py-1 rounded-full shadow-sm">
+                                            <p className="text-xs font-semibold text-gray-700">{roast.roastDate}</p>
+                                        </div>
                                     </div>
-                                )}
-                                <div className="mt-3 pt-3 border-t border-gray-100 flex gap-4 text-xs text-gray-500">
-                                    <span><strong>Batch Size:</strong> {roast.batchSizeKg} kg</span>
-                                    <span><strong>Yield:</strong> {roast.yieldPercentage}%</span>
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-5 space-y-4">
+                                    {/* Roast Notes */}
+                                    <div className="bg-amber-50 p-4 rounded-lg border-l-4 border-orange-500">
+                                        <p className="text-gray-800 italic leading-relaxed text-sm">
+                                            {roast.roastProfileNotes}
+                                        </p>
+                                    </div>
+
+                                    {/* Flavor Notes */}
+                                    {roast.flavorNotes && (
+                                        <div className="space-y-2">
+                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Flavor Notes</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {roast.flavorNotes.split(',').map(note => note.trim()).filter(Boolean).map((note, index) => (
+                                                    <span key={index} className="px-3 py-1.5 bg-yellow-100 text-amber-800 text-xs font-semibold rounded-full border border-amber-200">
+                                                        {note}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Stats */}
+                                    <div className="grid grid-cols-2 gap-3 pt-2">
+                                        <div className="bg-white rounded-lg p-3 text-center border border-orange-200">
+                                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Batch Size</p>
+                                            <p className="text-xl font-black text-orange-600">{roast.batchSizeKg} <span className="text-sm">kg</span></p>
+                                        </div>
+                                        <div className="bg-white rounded-lg p-3 text-center border border-amber-200">
+                                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Yield</p>
+                                            <p className="text-xl font-black text-amber-600">{roast.yieldPercentage}<span className="text-sm">%</span></p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
             )}
+            </div>
         </div>
     );
 };

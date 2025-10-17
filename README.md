@@ -13,7 +13,7 @@ how to install
 
 5 Pls create New Branches for code myself
 
-6 that cool ,have fun 
+6 goodluck ,have fun ,Enjoy code
 
 Presentation Layer: Frontend (Next.js + Tailwind CSS)
 

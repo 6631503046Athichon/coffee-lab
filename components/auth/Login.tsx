@@ -56,7 +56,6 @@ const Login: React.FC = () => {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-3">Coffee Lab</h1>
-          <p className="text-gray-600 text-lg">Digital Quality & Traceability Platform</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
@@ -182,7 +181,6 @@ const Login: React.FC = () => {
 
         {/* Footer */}
         <div className="text-center mt-8 text-gray-500 text-sm">
-          
         </div>
       </div>
 
