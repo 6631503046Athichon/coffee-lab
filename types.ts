@@ -167,6 +167,8 @@ export interface RoastBatch {
   roastDate: string;
   batchSizeKg: number;
   yieldPercentage: number;
+  roastedWeightKg?: number;
+  weightLossPct?: number;
   roastProfileNotes: string;
   flavorNotes?: string;
 }
