@@ -419,6 +419,16 @@ const FarmerDashboard: React.FC = () => {
                     <input type="number" id="weightKg" value={weightKg} onChange={e => setWeightKg(e.target.value)} required className="block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" placeholder="0" />
                 </div>
               </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Harvest Date</label>
+                <input
+                  type="date"
+                  value={harvestDate}
+                  onChange={(e) => setHarvestDate(e.target.value)}
+                  required
+                  className="block w-full border-2 border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                />
+              </div>
               <div className="flex items-end justify-between h-12 pt-2">
                   {showLotSuccess && (
                     <div className="flex items-center text-green-600 transition-opacity duration-300">
@@ -442,13 +452,7 @@ const FarmerDashboard: React.FC = () => {
               {filterStatuses.map(status => (
                 <button
                   key={status}
-                  onClick={() => {
-                    if (status === 'All') {
-                      navigate('/farmer-data-hub');
-                    } else {
-                      setStatusFilter(status);
-                    }
-                  }}
+                  onClick={() => setStatusFilter(status)}
                   className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
                     statusFilter === status
                       ? 'bg-indigo-600 text-white shadow-sm'
